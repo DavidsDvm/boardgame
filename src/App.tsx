@@ -94,7 +94,7 @@ const EMOJI_SHORTCUTS: Record<string, string> = {
  * Get the appropriate dice icon for a roll value
  */
 const getDiceIcon = (value: number) => {
-  const icons = [FaDiceOne, FaDiceTwo, FaDiceThree, FaDiceFour, FaDiceFive, FaDiceSix];
+  const icons = [FaDiceOne, FaDiceTwo, FaDiceThree, FaDiceFour];
   return icons[value - 1] || FaDiceOne;
 };
 
@@ -328,8 +328,11 @@ const PlayerPanel: FC<PlayerPanelProps> = ({ player, isCurrentPlayer, onTrade, c
 interface ChatSystemProps {
   messages: ChatMessage[];
   onSendMessage: (text: string) => void;
+  isFullScreen?: boolean;
+  onToggleFullScreen?: () => void;
+  isMobile?: boolean;
 }
-const ChatSystem: FC<ChatSystemProps> = ({ messages, onSendMessage }) => {
+const ChatSystem: FC<ChatSystemProps> = ({ messages, onSendMessage, isFullScreen = false, onToggleFullScreen, isMobile = false }) => {
   const [newMessage, setNewMessage] = useState('');
   const [showEmojiPanel, setShowEmojiPanel] = useState(false);
   const chatBodyRef = useRef<HTMLDivElement>(null);
@@ -357,7 +360,7 @@ const ChatSystem: FC<ChatSystemProps> = ({ messages, onSendMessage }) => {
 
   return (
     <motion.div 
-      className="chat-system"
+      className={`chat-system ${isFullScreen ? 'chat-fullscreen' : ''}`}
       variants={fadeInUp}
       initial="initial"
       animate="animate"
@@ -365,14 +368,27 @@ const ChatSystem: FC<ChatSystemProps> = ({ messages, onSendMessage }) => {
       <div className="chat-header">
         <FaComments className="chat-icon" />
         <h4>Game Chat</h4>
-        <motion.button
-          className="emoji-toggle"
-          onClick={() => setShowEmojiPanel(!showEmojiPanel)}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          <FaSmile />
-        </motion.button>
+        <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto' }}>
+          {isMobile && onToggleFullScreen && (
+            <motion.button
+              className="fullscreen-toggle"
+              onClick={onToggleFullScreen}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              title={isFullScreen ? "Exit fullscreen" : "Fullscreen chat"}
+            >
+              {isFullScreen ? "🗙" : "⛶"}
+            </motion.button>
+          )}
+          <motion.button
+            className="emoji-toggle"
+            onClick={() => setShowEmojiPanel(!showEmojiPanel)}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <FaSmile />
+          </motion.button>
+        </div>
       </div>
 
       <AnimatePresence>
@@ -697,6 +713,7 @@ const App: FC = () => {
   const [moneySquares, setMoneySquares] = useState<MoneySquare[]>([]);
   const [gameNumber, setGameNumber] = useState(1);
   const [turnNumber, setTurnNumber] = useState(1);
+  const [isChatFullScreen, setIsChatFullScreen] = useState(false);
   
   const boardRef = useRef<HTMLDivElement>(null);
 
@@ -733,19 +750,21 @@ const App: FC = () => {
     
     // Simulate dice rolling animation
     const rollAnimation = setInterval(() => {
-      setDiceResult(Math.floor(Math.random() * 6) + 1);
+      setDiceResult(Math.floor(Math.random() * 4) + 1);
     }, 100);
     
     setTimeout(() => {
       clearInterval(rollAnimation);
-      const finalRoll = Math.floor(Math.random() * 6) + 1;
+      const finalRoll = Math.floor(Math.random() * 4) + 1;
       setDiceResult(finalRoll);
       setIsRolling(false);
       addSystemMessage(`${players[currentPlayerId].name} rolled a ${finalRoll} (dice)`);
 
       setPlayers(prevPlayers => {
           const currentPlayer = prevPlayers[currentPlayerId];
-          const newPosition = Math.min(currentPlayer.piecePosition + finalRoll, totalSquares - 1);
+          const newPosition = Math.min(currentPlayer.piecePosition + finalRoll, 8); // Win at position 9 (index 8)
+          
+          addSystemMessage(`${currentPlayer.name} moved to position ${newPosition + 1}`);
           
           // Check for money collection
           const moneySquare = moneySquares.find(ms => ms.position === newPosition && !ms.collected);
@@ -759,11 +778,11 @@ const App: FC = () => {
             ));
           }
 
-          if (newPosition >= totalSquares - 1) {
+          if (newPosition >= 8) { // Win at position 9 (index 8)
               setIsGameOver(true);
               setGameOverReason('win');
               updatedPlayer.money += 20; // Winner prize
-              addSystemMessage(`${currentPlayer.name} has won the game and earned $20 prize! (win) (party)`);
+              addSystemMessage(`${currentPlayer.name} reached position 9 and won the game! Earned $20 prize! (win) (party)`);
           }
           
           return {
@@ -772,7 +791,7 @@ const App: FC = () => {
           };
       });
     }, 1000);
-  }, [currentPlayerId, players, totalSquares, isGameOver, isRolling, addSystemMessage]);
+  }, [currentPlayerId, players, isGameOver, isRolling, addSystemMessage, moneySquares]);
 
   const handleEndTurn = () => {
     if(isGameOver) return;
@@ -973,12 +992,13 @@ const App: FC = () => {
           --color-text: ${CALM_BLUE_PALETTE.text};
           --color-dark: ${CALM_BLUE_PALETTE.dark};
           --font-family: 'Inter', 'Segoe UI', 'Roboto', sans-serif;
-          --border-radius: 12px;
-          --shadow-sm: 0 2px 8px rgba(0,0,0,0.1);
-          --shadow-md: 0 4px 20px rgba(0,0,0,0.15);
-          --shadow-lg: 0 8px 32px rgba(0,0,0,0.2);
+          --border-radius: 16px;
+          --shadow-sm: 0 4px 12px rgba(87, 185, 255, 0.15);
+          --shadow-md: 0 8px 25px rgba(87, 185, 255, 0.2);
+          --shadow-lg: 0 12px 40px rgba(87, 185, 255, 0.25);
           --gradient-primary: linear-gradient(135deg, var(--color-medium), var(--color-light));
           --gradient-secondary: linear-gradient(135deg, var(--color-dark), var(--color-text));
+          --chat-height: 280px;
         }
         * {
           box-sizing: border-box;
@@ -990,20 +1010,21 @@ const App: FC = () => {
           color: var(--color-dark);
           overscroll-behavior: none;
           min-height: 100vh;
+          overflow-x: hidden;
         }
         .main-container {
           display: grid;
-          grid-template-columns: 250px 1fr 250px;
-          grid-template-rows: 1fr auto;
+          grid-template-columns: 280px 1fr 280px;
+          grid-template-rows: 1fr var(--chat-height);
           grid-template-areas:
             "p1 board p2"
             "chat chat chat";
           height: 100vh;
           width: 100%;
-          gap: 20px;
-          padding: 20px;
+          gap: 24px;
+          padding: 24px;
           box-sizing: border-box;
-          max-width: 1400px;
+          max-width: 1600px;
           margin: 0 auto;
         }
         .game-area {
@@ -1012,38 +1033,61 @@ const App: FC = () => {
           flex-direction: column;
           align-items: center;
           justify-content: center;
+          position: relative;
+          padding: 20px;
         }
         .game-board {
           display: grid;
           width: 100%;
-          max-width: 600px;
+          max-width: 650px;
           aspect-ratio: 1 / 1;
-          border: 4px solid var(--color-text);
-          background: linear-gradient(45deg, #ffffff 25%, #f8fbff 25%, #f8fbff 50%, #ffffff 50%, #ffffff 75%, #f8fbff 75%, #f8fbff);
-          background-size: 20px 20px;
+          border: 5px solid var(--color-medium);
+          background: linear-gradient(45deg, #ffffff 25%, #f0f8ff 25%, #f0f8ff 50%, #ffffff 50%, #ffffff 75%, #f0f8ff 75%, #f0f8ff);
+          background-size: 30px 30px;
           position: relative;
           border-radius: var(--border-radius);
           box-shadow: var(--shadow-lg);
           overflow: hidden;
+          transition: all 0.3s ease;
+        }
+        .game-board:hover {
+          box-shadow: 0 15px 50px rgba(87, 185, 255, 0.3);
+          transform: translateY(-2px);
         }
         .board-square {
-          border: 1px solid var(--color-light);
+          border: 2px solid var(--color-light);
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          font-size: 1.2rem;
-          color: var(--color-text);
+          font-size: 1.3rem;
+          color: var(--color-dark);
           font-weight: bold;
-          background: rgba(255,255,255,0.8);
-          backdrop-filter: blur(10px);
-          transition: all 0.3s ease;
-          padding: 4px;
+          background: rgba(255,255,255,0.9);
+          backdrop-filter: blur(15px);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          padding: 6px;
           position: relative;
+          overflow: hidden;
+        }
+        .board-square::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(87, 185, 255, 0.2), transparent);
+          transition: left 0.5s;
         }
         .board-square:hover {
-          background: rgba(255,255,255,0.95);
-          transform: scale(1.02);
+          background: rgba(255,255,255,1);
+          transform: scale(1.05);
+          border-color: var(--color-medium);
+          box-shadow: inset 0 0 15px rgba(87, 185, 255, 0.2);
+        }
+        .board-square:hover::before {
+          left: 100%;
         }
         .game-piece {
           position: absolute;
@@ -1053,12 +1097,26 @@ const App: FC = () => {
           height: calc(100% / ${BOARD_DIMENSION} * 0.7);
           border-radius: 50%;
           margin: calc(100% / ${BOARD_DIMENSION} * 0.15);
-          border: 4px solid white;
-          box-shadow: var(--shadow-md);
+          border: 3px solid white;
+          box-shadow: var(--shadow-lg);
           z-index: 10;
           display: flex;
           align-items: center;
           justify-content: center;
+          transition: all 0.3s ease;
+        }
+        .game-piece:hover {
+          transform: scale(1.05);
+          box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+        
+        @media (max-width: 768px) {
+          .game-piece {
+            width: calc(100% / ${BOARD_DIMENSION} * 0.6);
+            height: calc(100% / ${BOARD_DIMENSION} * 0.6);
+            margin: calc(100% / ${BOARD_DIMENSION} * 0.2);
+            border: 2px solid white;
+          }
         }
         .piece-inner {
           width: 100%;
@@ -1077,23 +1135,56 @@ const App: FC = () => {
           font-size: calc(100% / ${BOARD_DIMENSION} * 0.5);
           text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         }
+        
+        @media (max-width: 768px) {
+          .piece-label {
+            font-size: calc(100% / ${BOARD_DIMENSION} * 0.4);
+          }
+        }
         .square-number {
-          font-size: 0.9rem;
-          margin-bottom: 4px;
+          font-size: 0.95rem;
+          margin-bottom: 6px;
+          color: var(--color-medium);
+          text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+          font-weight: 700;
         }
         .money-indicator {
-          font-size: 0.7rem;
-          background: #FFD700;
+          font-size: 0.75rem;
+          background: linear-gradient(135deg, #FFD700, #FFA500);
           color: #333;
-          padding: 2px 4px;
-          border-radius: 4px;
+          padding: 4px 8px;
+          border-radius: 8px;
           font-weight: bold;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-          animation: coinGlow 2s infinite;
+          box-shadow: 0 2px 8px rgba(255,215,0,0.4);
+          animation: coinGlow 3s infinite;
+          border: 2px solid #FFF;
+          text-shadow: 0 1px 1px rgba(0,0,0,0.1);
+          position: relative;
+          overflow: hidden;
+        }
+        .money-indicator::before {
+          content: '';
+          position: absolute;
+          top: -50%;
+          left: -50%;
+          width: 200%;
+          height: 200%;
+          background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.6) 50%, transparent 70%);
+          animation: shimmer 4s infinite;
         }
         @keyframes coinGlow {
-          0%, 100% { box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
-          50% { box-shadow: 0 1px 8px rgba(255,215,0,0.6); }
+          0%, 100% { 
+            box-shadow: 0 2px 8px rgba(255,215,0,0.4);
+            transform: scale(1);
+          }
+          50% { 
+            box-shadow: 0 4px 20px rgba(255,215,0,0.8), 0 0 30px rgba(255,215,0,0.4);
+            transform: scale(1.05);
+          }
+        }
+        @keyframes shimmer {
+          0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+          100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
         }
         .money-amount {
           color: #4CAF50 !important;
@@ -1105,7 +1196,7 @@ const App: FC = () => {
           gap: 15px;
         }
         button {
-          padding: 12px 24px;
+          padding: 14px 28px;
           font-size: 1rem;
           font-weight: 600;
           border: none;
@@ -1113,14 +1204,16 @@ const App: FC = () => {
           background: var(--gradient-primary);
           color: white;
           cursor: pointer;
-          transition: all 0.3s ease;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           box-shadow: var(--shadow-sm);
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
           justify-content: center;
           position: relative;
           overflow: hidden;
+          text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+          letter-spacing: 0.5px;
         }
         button:before {
           content: '';
@@ -1129,47 +1222,64 @@ const App: FC = () => {
           left: -100%;
           width: 100%;
           height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-          transition: left 0.5s;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+          transition: left 0.6s;
         }
         button:hover:before {
           left: 100%;
         }
         button:hover {
-          transform: translateY(-2px);
-          box-shadow: var(--shadow-md);
+          transform: translateY(-3px);
+          box-shadow: var(--shadow-lg);
+          filter: brightness(1.1);
         }
         button:active {
-          transform: translateY(0);
-          box-shadow: var(--shadow-sm);
+          transform: translateY(-1px);
+          box-shadow: var(--shadow-md);
         }
         button:disabled {
-          background: #ccc;
+          background: linear-gradient(135deg, #bbb, #999);
           cursor: not-allowed;
           transform: none;
           box-shadow: none;
+          opacity: 0.6;
         }
         button:disabled:before {
           display: none;
         }
         .player-panel {
           grid-area: p1;
-          padding: 20px;
-          background: rgba(255,255,255,0.95);
-          backdrop-filter: blur(15px);
+          padding: 24px;
+          background: rgba(255,255,255,0.98);
+          backdrop-filter: blur(20px);
           border-radius: var(--border-radius);
           border: 3px solid var(--color-text);
-          transition: all 0.3s ease;
-          box-shadow: var(--shadow-sm);
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: var(--shadow-md);
+          position: relative;
+          overflow: hidden;
+        }
+        .player-panel::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(135deg, rgba(87, 185, 255, 0.03), rgba(144, 213, 255, 0.03));
+          pointer-events: none;
         }
         .player-panel.p2 {
           grid-area: p2;
         }
         .player-panel.active {
-          transform: translateY(-8px);
+          transform: translateY(-10px);
           box-shadow: var(--shadow-lg);
           border-color: var(--color-medium) !important;
           background: rgba(255,255,255,1);
+        }
+        .player-panel.active::before {
+          background: linear-gradient(135deg, rgba(87, 185, 255, 0.08), rgba(144, 213, 255, 0.08));
         }
         .player-header {
           display: flex;
@@ -1177,6 +1287,7 @@ const App: FC = () => {
           gap: 12px;
           margin-bottom: 16px;
           position: relative;
+          min-height: 48px;
         }
         .player-avatar {
           width: 48px;
@@ -1203,9 +1314,11 @@ const App: FC = () => {
           font-weight: 500;
         }
         .active-indicator {
+          position: absolute;
+          top: 0;
+          right: 0;
           color: #4CAF50;
           font-size: 1.2rem;
-          margin-left: auto;
           animation: pulse 2s infinite;
         }
         @keyframes pulse {
@@ -1268,15 +1381,19 @@ const App: FC = () => {
         }
         .chat-system {
           grid-area: chat;
-          background: rgba(255,255,255,0.95);
-          backdrop-filter: blur(15px);
+          background: rgba(255,255,255,0.98);
+          backdrop-filter: blur(20px);
           border-radius: var(--border-radius);
           padding: 20px;
           display: flex;
           flex-direction: column;
-          border: 2px solid var(--color-text);
-          max-height: 30vh;
-          box-shadow: var(--shadow-md);
+          border: 3px solid var(--color-text);
+          height: var(--chat-height);
+          min-height: var(--chat-height);
+          max-height: var(--chat-height);
+          box-shadow: var(--shadow-lg);
+          position: relative;
+          overflow: hidden;
         }
         .chat-header {
           display: flex;
@@ -1295,11 +1412,70 @@ const App: FC = () => {
           color: var(--color-dark);
           font-size: 1.2rem;
         }
-        .emoji-toggle {
-          margin-left: auto;
+        .emoji-toggle, .fullscreen-toggle {
           padding: 8px;
           font-size: 1.1rem;
           min-width: auto;
+        }
+        
+        .chat-fullscreen {
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          bottom: 0 !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          max-width: 100vw !important;
+          max-height: 100vh !important;
+          z-index: 1000 !important;
+          grid-area: unset !important;
+          border-radius: 0 !important;
+        }
+        
+        .chat-fullscreen .chat-body {
+          height: calc(100vh - 160px) !important;
+        }
+        
+        .floating-chat-button {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+          background: var(--gradient-primary);
+          color: white;
+          border: none;
+          box-shadow: var(--shadow-lg);
+          z-index: 200;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.5rem;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          padding-left: 0px;
+          padding-right: 0px;
+        }
+        .floating-chat-button:hover {
+          transform: scale(1.1);
+          box-shadow: 0 8px 25px rgba(87, 185, 255, 0.4);
+        }
+        .floating-chat-button .notification-badge {
+          position: absolute;
+          top: -5px;
+          right: -5px;
+          background: #ff4757;
+          color: white;
+          border-radius: 50%;
+          width: 20px;
+          height: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.7rem;
+          font-weight: bold;
         }
         .emoji-panel {
           display: flex;
@@ -1323,22 +1499,29 @@ const App: FC = () => {
           transform: scale(1.2);
         }
         .chat-body {
-          flex-grow: 1;
+          flex: 1;
           overflow-y: auto;
-          margin-bottom: 12px;
-          padding-right: 8px;
+          margin-bottom: 16px;
+          padding-right: 12px;
           scrollbar-width: thin;
-          scrollbar-color: var(--color-light) transparent;
+          scrollbar-color: var(--color-medium) transparent;
+          min-height: 0;
+          height: calc(var(--chat-height) - 120px);
         }
         .chat-body::-webkit-scrollbar {
-          width: 6px;
+          width: 8px;
         }
         .chat-body::-webkit-scrollbar-track {
-          background: transparent;
+          background: rgba(var(--color-light), 0.3);
+          border-radius: 4px;
         }
         .chat-body::-webkit-scrollbar-thumb {
-          background: var(--color-light);
-          border-radius: 3px;
+          background: var(--color-medium);
+          border-radius: 4px;
+          transition: background 0.3s ease;
+        }
+        .chat-body::-webkit-scrollbar-thumb:hover {
+          background: var(--color-dark);
         }
         .chat-message {
           margin-bottom: 8px;
@@ -1368,16 +1551,26 @@ const App: FC = () => {
         }
         .chat-form {
           display: flex;
+          gap: 2px;
         }
         .chat-form input {
           flex-grow: 1;
-          padding: 8px;
-          border: 1px solid var(--color-text);
-          border-radius: var(--border-radius) 0 0 var(--border-radius);
+          padding: 12px 16px;
+          border: 2px solid var(--color-light);
+          border-radius: var(--border-radius);
           outline: none;
+          font-size: 0.95rem;
+          transition: all 0.3s ease;
+          background: rgba(255,255,255,0.9);
+        }
+        .chat-form input:focus {
+          border-color: var(--color-medium);
+          box-shadow: 0 0 0 3px rgba(87, 185, 255, 0.1);
         }
         .chat-form button {
-          border-radius: 0 var(--border-radius) var(--border-radius) 0;
+          border-radius: var(--border-radius);
+          padding: 12px 16px;
+          min-width: 50px;
         }
         
         /* ENHANCED MODAL STYLES */
@@ -1530,47 +1723,221 @@ const App: FC = () => {
         }
 
         /* MOBILE LAYOUT */
-        @media (max-width: 767px) {
+        @media (max-width: 768px) {
+          :root {
+            --chat-height: 140px;
+          }
           .main-container {
             grid-template-columns: 1fr;
-            grid-template-rows: auto 1fr auto;
+            grid-template-rows: auto 1fr;
             grid-template-areas:
               "panels"
-              "board"
-              "chat";
-            height: auto;
-            min-height: 100vh;
-            padding: 10px;
-            gap: 10px;
+              "board";
+            height: 100vh;
+            padding: 8px;
+            gap: 8px;
+            width: 100vw;
+            max-width: 100vw;
+            overflow-x: hidden;
           }
           .player-panels-container {
             grid-area: panels;
             display: flex;
-            justify-content: space-around;
-            gap: 10px;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 4px;
+            width: 100%;
+            max-width: 100vw;
+            box-sizing: border-box;
           }
-          .player-panel { flex: 1; text-align: center; }
-          .game-board { max-width: 100%; }
-          .chat-system { max-height: 200px; }
+          .player-panel { 
+            flex: 1; 
+            padding: 12px;
+            text-align: center;
+            min-height: auto;
+            max-width: calc(50vw - 12px);
+            box-sizing: border-box;
+          }
+          .player-panel .player-header {
+            flex-direction: column;
+            gap: 8px;
+            text-align: center;
+            min-height: 60px;
+            justify-content: center;
+          }
+          .player-panel .player-avatar {
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+            margin: 0 auto;
+          }
+          .player-panel .player-info h3 {
+            font-size: 1.1rem;
+            margin: 4px 0;
+          }
+          .player-panel .player-status {
+            font-size: 0.8rem;
+          }
+          .player-panel .player-stats {
+            margin: 12px 0;
+            padding: 8px;
+          }
+          .player-panel .stat-item {
+            margin-bottom: 4px;
+          }
+          .player-panel .stat-label {
+            font-size: 0.8rem;
+          }
+          .player-panel .stat-value {
+            font-size: 1rem;
+          }
+          .player-panel .trade-button {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            margin-top: 8px;
+          }
+          .player-panel .active-indicator {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            font-size: 1rem;
+          }
+          .game-area {
+            grid-area: board;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            padding-bottom: 90px;
+            width: 100%;
+            max-width: 100vw;
+            box-sizing: border-box;
+            overflow: hidden;
+          }
+          .game-board { 
+            max-width: calc(100vw - 32px);
+            width: calc(100vw - 32px);
+            height: calc(100vw - 32px);
+            max-height: calc(100vh - 240px);
+            margin: 0 auto;
+            box-sizing: border-box;
+          }
+          .chat-system { 
+            height: var(--chat-height);
+            min-height: var(--chat-height);
+            max-height: var(--chat-height);
+            padding: 12px;
+            width: 100%;
+            max-width: 100vw;
+            box-sizing: border-box;
+          }
+          .chat-body {
+            height: calc(var(--chat-height) - 100px);
+            font-size: 0.85rem;
+          }
           .controls {
             position: fixed;
             bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.9);
+            left: 8px;
+            right: 8px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
             padding: 10px;
-            border-radius: var(--border-radius);
-            box-shadow: 0 0 15px rgba(0,0,0,0.2);
-            z-index: 50;
-            width: calc(100% - 40px);
-            justify-content: space-around;
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 2px solid var(--color-light);
+            box-sizing: border-box;
+            width: calc(100vw - 16px);
+            max-width: calc(100vw - 16px);
           }
-          .game-area {
-            /* Add touch handlers for swipe gesture */
+          .controls button {
+            flex: 1;
+            margin: 0 4px;
+            padding: 10px 8px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            min-width: 0;
+          }
+          .modal-content {
+            width: calc(100vw - 20px);
+            max-width: 500px;
+            padding: 16px;
+            margin: 10px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+          }
+          .trade-players {
+            flex-direction: column;
+            gap: 16px;
+          }
+          .trade-arrow {
+            transform: rotate(90deg);
+            font-size: 1.5rem;
+          }
+          .modal-actions {
+            flex-direction: column;
+            gap: 12px;
+          }
+          .modal-actions button {
+            width: 100%;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .main-container {
+            padding: 6px;
+            gap: 6px;
+          }
+          .player-panels-container {
+            gap: 6px;
+          }
+          .player-panel {
+            padding: 8px;
+          }
+          .player-panel .player-avatar {
+            width: 32px;
+            height: 32px;
+            font-size: 0.9rem;
+          }
+          .player-panel .player-info h3 {
+            font-size: 1rem;
+          }
+          .player-panel .player-status {
+            font-size: 0.75rem;
+          }
+          .game-board {
+            width: calc(100vw - 24px);
+            max-width: calc(100vw - 24px);
+            height: calc(100vw - 24px);
+            max-height: calc(100vh - 180px);
+          }
+          .controls {
+            left: 6px;
+            right: 6px;
+            width: calc(100vw - 12px);
+            max-width: calc(100vw - 12px);
+            padding: 8px;
+          }
+          .controls button {
+            padding: 8px 6px;
+            font-size: 0.75rem;
+          }
+          .chat-system {
+            padding: 10px;
+          }
+          .modal-content {
+            width: calc(100vw - 12px);
+            padding: 12px;
+            margin: 6px;
           }
         }
       `}</style>
-      <div className="main-container">
+      <div className="main-container" style={{ display: isMobile && isChatFullScreen ? 'none' : 'grid' }}>
         {isMobile ? (
           <div className="player-panels-container">
             <PlayerPanel 
@@ -1620,17 +1987,24 @@ const App: FC = () => {
           animate="animate"
         >
           <AnimatePresence>
-            {isMobile && !isGameOver && (
-              <motion.p 
-                style={{textAlign: "center", color: CALM_BLUE_PALETTE.dark, marginBottom: "16px"}}
-                variants={fadeInUp}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                👆 Swipe up on the board to roll the dice!
-              </motion.p>
-            )}
+                      {isMobile && !isGameOver && (
+            <motion.p 
+              style={{
+                textAlign: "center", 
+                color: CALM_BLUE_PALETTE.dark, 
+                marginBottom: "8px",
+                fontSize: "0.9rem",
+                padding: "0 8px",
+                lineHeight: "1.3"
+              }}
+              variants={fadeInUp}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
+              👆 Swipe up to roll!
+            </motion.p>
+          )}
             
             {isGameOver && (
               <motion.div 
@@ -1641,7 +2015,7 @@ const App: FC = () => {
               >
                 <h2 style={{color: "#4CAF50", margin: "0", fontSize: "2rem"}}>
                   <FaTrophy style={{marginRight: "12px"}} />
-                  {players[player1.piecePosition === totalSquares - 1 ? 1: 2].name} Wins!
+                  {players[player1.piecePosition >= 8 ? 1: 2].name} Wins!
                 </h2>
                 <p style={{color: CALM_BLUE_PALETTE.text, margin: "8px 0"}}>🎉 Congratulations! 🎉</p>
                 
@@ -1740,7 +2114,7 @@ const App: FC = () => {
           )}
         </motion.div>
 
-        {isMobile && (
+        {isMobile && !isChatFullScreen && (
           <motion.div 
             className="controls"
             variants={fadeInUp}
@@ -1788,8 +2162,43 @@ const App: FC = () => {
           </motion.div>
         )}
 
-        <ChatSystem messages={messages} onSendMessage={handleSendMessage} />
+        {!isMobile && (
+          <ChatSystem 
+            messages={messages} 
+            onSendMessage={handleSendMessage}
+            isFullScreen={false}
+            onToggleFullScreen={() => setIsChatFullScreen(!isChatFullScreen)}
+            isMobile={isMobile}
+          />
+        )}
       </div>
+
+      {isMobile && !isChatFullScreen && (
+        <motion.button
+          className="floating-chat-button"
+          onClick={() => setIsChatFullScreen(true)}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <FaComments />
+          {messages.length > 0 && (
+            <span className="notification-badge">{messages.length}</span>
+          )}
+        </motion.button>
+      )}
+
+      {isMobile && isChatFullScreen && (
+        <ChatSystem 
+          messages={messages} 
+          onSendMessage={handleSendMessage}
+          isFullScreen={true}
+          onToggleFullScreen={() => setIsChatFullScreen(!isChatFullScreen)}
+          isMobile={isMobile}
+        />
+      )}
 
       {showTradeModal && (
         <TradeModal 
