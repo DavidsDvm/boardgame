@@ -475,14 +475,12 @@ interface TradeModalProps {
 const TradeModal: FC<TradeModalProps> = ({ offer, players, currentPlayerId, onClose, onCancel, onAccept, onDecline, onSendOffer }) => {
   const [tradeAmount, setTradeAmount] = useState(50);
   const [tradeMessage, setTradeMessage] = useState('');
-  const [isConfirming, setIsConfirming] = useState(false);
 
   // Reset form when offer changes
   useEffect(() => {
     if (offer) {
       setTradeAmount(offer.amount);
       setTradeMessage(offer.message);
-      setIsConfirming(false);
     }
   }, [offer]);
 
@@ -500,7 +498,6 @@ const TradeModal: FC<TradeModalProps> = ({ offer, players, currentPlayerId, onCl
     // Reset form and close immediately
     setTradeAmount(50);
     setTradeMessage('');
-    setIsConfirming(false);
     onClose();
   };
 
@@ -699,7 +696,6 @@ interface InteractiveTutorialProps {
   onPrev: () => void;
   onClose: () => void;
   isMobile: boolean;
-  boardRef: React.RefObject<HTMLDivElement | null>;
   totalSquares: number;
 }
 
@@ -709,7 +705,6 @@ const InteractiveTutorial: FC<InteractiveTutorialProps> = ({
   onPrev,
   onClose,
   isMobile,
-  boardRef,
   totalSquares
 }) => {
   const [highlightBounds, setHighlightBounds] = useState<DOMRect | null>(null);
@@ -2769,7 +2764,6 @@ const App: FC = () => {
           onPrev={handleTutorialPrev}
           onClose={handleTutorialClose}
           isMobile={isMobile}
-          boardRef={boardRef}
           totalSquares={totalSquares}
         />
       )}
