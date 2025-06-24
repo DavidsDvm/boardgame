@@ -468,11 +468,12 @@ interface TradeModalProps {
     players: Record<PlayerId, Player>;
     currentPlayerId: PlayerId;
     onClose: () => void;
+    onCancel?: () => void;
     onAccept: () => void;
     onDecline: () => void;
     onSendOffer: (amount: number, message: string) => void;
 }
-const TradeModal: FC<TradeModalProps> = ({ offer, players, currentPlayerId, onClose, onAccept, onDecline, onSendOffer }) => {
+const TradeModal: FC<TradeModalProps> = ({ offer, players, currentPlayerId, onClose, onCancel, onAccept, onDecline, onSendOffer }) => {
     const [tradeAmount, setTradeAmount] = useState(50);
     const [tradeMessage, setTradeMessage] = useState('');
     const [isConfirming, setIsConfirming] = useState(false);
@@ -657,7 +658,7 @@ const TradeModal: FC<TradeModalProps> = ({ offer, players, currentPlayerId, onCl
                            // Sending player can send or cancel
                            <>
                              <motion.button 
-                                 onClick={onClose} 
+                                 onClick={onCancel || onClose} 
                                  className="cancel"
                                  whileHover={{ scale: 1.05 }}
                                  whileTap={{ scale: 0.95 }}
@@ -835,14 +836,14 @@ const App: FC = () => {
       return;
     }
     
-    // Check if there's already an active trade offer FROM this player
-    if (tradeOffer && tradeOffer.fromPlayerId === currentPlayerId && (tradeOffer.status === 'draft' || tradeOffer.status === 'sent')) {
+    // Check if there's already an active trade offer FROM this player (only if it's been sent, not draft)
+    if (tradeOffer && tradeOffer.fromPlayerId === currentPlayerId && tradeOffer.status === 'sent') {
       addSystemMessage("You already have an active trade offer!");
       return;
     }
     
-    // Check if there's a pending trade offer that hasn't been responded to
-    if (tradeOffer && tradeOffer.status === 'sent') {
+    // Check if there's a pending trade offer that hasn't been responded to (from other player)
+    if (tradeOffer && tradeOffer.status === 'sent' && tradeOffer.fromPlayerId !== currentPlayerId) {
       addSystemMessage("There's already a pending trade offer. Wait for it to be resolved!");
       return;
     }
@@ -901,6 +902,12 @@ const App: FC = () => {
       // Send chat message when trade is sent
       addSystemMessage(`${players[tradeOffer.fromPlayerId].name} sent a trade offer of $${amount} to ${players[tradeOffer.toPlayerId].name}! (trade)`);
     }
+  };
+
+  const handleCancelTrade = () => {
+    // Clear the trade offer when canceling
+    setTradeOffer(null);
+    setShowTradeModal(false);
   };
 
   const handleRematch = () => {
@@ -2206,6 +2213,7 @@ const App: FC = () => {
           players={players}
           currentPlayerId={currentPlayerId}
           onClose={() => setShowTradeModal(false)}
+          onCancel={handleCancelTrade}
           onAccept={handleAcceptTrade}
           onDecline={handleDeclineTrade}
           onSendOffer={handleSendTradeOffer}
