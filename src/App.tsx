@@ -59,7 +59,7 @@ const CALM_BLUE_PALETTE = {
 };
 
 const INITIAL_PLAYERS: Record<PlayerId, Player> = {
-  1: { id: 1, name: 'Aquas', color: '#57B9FF', piecePosition: 0, money: 100 },
+  1: { id: 1, name: 'Aqua', color: '#57B9FF', piecePosition: 0, money: 100 },
   2: { id: 2, name: 'Ocean', color: '#3d82b3', piecePosition: 0, money: 100 },
 };
 
@@ -273,8 +273,9 @@ interface PlayerPanelProps {
   onTrade: (playerId: PlayerId) => void;
   className?: string;
   hasPendingTrade?: boolean;
+  hasIncomingTrade?: boolean;
 }
-const PlayerPanel: FC<PlayerPanelProps> = ({ player, isCurrentPlayer, onTrade, className, hasPendingTrade }) => {
+const PlayerPanel: FC<PlayerPanelProps> = ({ player, isCurrentPlayer, onTrade, className, hasPendingTrade, hasIncomingTrade }) => {
   return (
     <motion.div 
       className={`player-panel ${isCurrentPlayer ? 'active' : ''} ${className || ''}`}
@@ -308,14 +309,14 @@ const PlayerPanel: FC<PlayerPanelProps> = ({ player, isCurrentPlayer, onTrade, c
        </div>
       
              <motion.button 
-         className={`trade-button ${hasPendingTrade ? 'pending-trade' : ''}`}
+         className={`trade-button ${hasPendingTrade || hasIncomingTrade ? 'pending-trade' : ''}`}
          onClick={() => onTrade(player.id)}
          whileHover={{ scale: 1.05 }}
          whileTap={{ scale: 0.95 }}
        >
          <FaHandshake /> 
-         {hasPendingTrade ? 'Respond to Trade' : 'Trade'}
-         {hasPendingTrade && <span className="trade-notification">!</span>}
+         {hasIncomingTrade ? 'Respond to Trade' : hasPendingTrade ? 'Pending Trade' : 'Trade'}
+         {(hasPendingTrade || hasIncomingTrade) && <span className="trade-notification">!</span>}
        </motion.button>
     </motion.div>
   );
@@ -688,6 +689,7 @@ const App: FC = () => {
   const [diceResult, setDiceResult] = useState<number | null>(null);
   const [squareSize, setSquareSize] = useState(0);
   const [tradeOffer, setTradeOffer] = useState<TradeOffer | null>(null);
+  const [showTradeModal, setShowTradeModal] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
   const [moneySquares, setMoneySquares] = useState<MoneySquare[]>([]);
   const [gameNumber, setGameNumber] = useState(1);
@@ -787,15 +789,27 @@ const App: FC = () => {
   };
   
   const handleInitiateTrade = (targetPlayerId: PlayerId) => {
-    if (targetPlayerId === currentPlayerId) {
-        addSystemMessage("You can't trade with yourself!");
-        return;
-    }
+    console.log('handleInitiateTrade called:', {
+      targetPlayerId,
+      currentPlayerId,
+      tradeOffer,
+      hasIncomingTrade: tradeOffer && tradeOffer.toPlayerId === currentPlayerId && tradeOffer.status === 'sent'
+    });
     
-    // Check if there's already a sent trade offer TO this current player (they need to respond)
-    if (tradeOffer && tradeOffer.toPlayerId === currentPlayerId && tradeOffer.status === 'sent') {
-      // Player is clicking to respond to an existing offer - just open the modal
-      return; // Modal will show with response options
+    // Special case: If clicking on your own trade button, check for incoming trades
+    if (targetPlayerId === currentPlayerId) {
+      // Check if there's a trade offer TO this player that they need to respond to
+      if (tradeOffer && tradeOffer.toPlayerId === currentPlayerId && tradeOffer.status === 'sent') {
+        console.log('Opening modal for incoming trade response');
+        // Force modal to show for incoming trade response
+        setShowTradeModal(true);
+        return;
+      }
+      
+      // If no incoming trade, show the "can't trade with yourself" message
+      console.log('No incoming trade, showing error message');
+      addSystemMessage("You can't trade with yourself!");
+      return;
     }
     
     // Check if there's already an active trade offer FROM this player
@@ -821,6 +835,7 @@ const App: FC = () => {
       createdTurn: turnNumber
     };
     setTradeOffer(newTradeOffer);
+    setShowTradeModal(true);
   };
   
   const handleAcceptTrade = () => {
@@ -831,6 +846,7 @@ const App: FC = () => {
         if (fromPlayer.money < tradeOffer.amount) {
           addSystemMessage(`${fromPlayer.name} doesn't have enough money for this trade! (sad)`);
           setTradeOffer(null);
+          setShowTradeModal(false);
           return;
         }
         
@@ -842,6 +858,7 @@ const App: FC = () => {
         
         addSystemMessage(`${fromPlayer.name} sent $${tradeOffer.amount} to ${toPlayer.name}! (trade) (money)`);
         setTradeOffer(null);
+        setShowTradeModal(false);
     }
   };
   
@@ -849,6 +866,7 @@ const App: FC = () => {
     if(tradeOffer) {
       addSystemMessage(`${players[tradeOffer.toPlayerId].name} declined the trade offer from ${players[tradeOffer.fromPlayerId].name}. (sad)`);
       setTradeOffer(null);
+      setShowTradeModal(false);
     }
   };
 
@@ -856,6 +874,7 @@ const App: FC = () => {
     if(tradeOffer && tradeOffer.status === 'draft') {
       const updatedOffer = { ...tradeOffer, amount, message, status: 'sent' as const };
       setTradeOffer(updatedOffer);
+      setShowTradeModal(false);
       // Send chat message when trade is sent
       addSystemMessage(`${players[tradeOffer.fromPlayerId].name} sent a trade offer of $${amount} to ${players[tradeOffer.toPlayerId].name}! (trade)`);
     }
@@ -888,6 +907,7 @@ const App: FC = () => {
     setGameNumber(prev => prev + 1);
     setTurnNumber(1);
     setTradeOffer(null); // Clear any pending trades
+    setShowTradeModal(false);
     addSystemMessage("New game started! Each player paid $25 entry fee. (party)");
   };
 
@@ -1524,13 +1544,15 @@ const App: FC = () => {
               player={player1} 
               isCurrentPlayer={currentPlayerId === 1} 
               onTrade={handleInitiateTrade} 
-              hasPendingTrade={tradeOffer?.toPlayerId === 1 && tradeOffer?.status === 'sent' && currentPlayerId === 1}
+              hasPendingTrade={tradeOffer?.fromPlayerId === 1 && tradeOffer?.status === 'sent'}
+              hasIncomingTrade={tradeOffer?.toPlayerId === 1 && tradeOffer?.status === 'sent' && currentPlayerId === 1}
             />
             <PlayerPanel 
               player={player2} 
               isCurrentPlayer={currentPlayerId === 2} 
               onTrade={handleInitiateTrade} 
-              hasPendingTrade={tradeOffer?.toPlayerId === 2 && tradeOffer?.status === 'sent' && currentPlayerId === 2}
+              hasPendingTrade={tradeOffer?.fromPlayerId === 2 && tradeOffer?.status === 'sent'}
+              hasIncomingTrade={tradeOffer?.toPlayerId === 2 && tradeOffer?.status === 'sent' && currentPlayerId === 2}
             />
           </div>
         ) : (
@@ -1539,14 +1561,16 @@ const App: FC = () => {
               player={player1} 
               isCurrentPlayer={currentPlayerId === 1} 
               onTrade={handleInitiateTrade} 
-              hasPendingTrade={tradeOffer?.toPlayerId === 1 && tradeOffer?.status === 'sent' && currentPlayerId === 1}
+              hasPendingTrade={tradeOffer?.fromPlayerId === 1 && tradeOffer?.status === 'sent'}
+              hasIncomingTrade={tradeOffer?.toPlayerId === 1 && tradeOffer?.status === 'sent' && currentPlayerId === 1}
             />
             <PlayerPanel 
               player={player2} 
               isCurrentPlayer={currentPlayerId === 2} 
               onTrade={handleInitiateTrade} 
               className="p2" 
-              hasPendingTrade={tradeOffer?.toPlayerId === 2 && tradeOffer?.status === 'sent' && currentPlayerId === 2}
+              hasPendingTrade={tradeOffer?.fromPlayerId === 2 && tradeOffer?.status === 'sent'}
+              hasIncomingTrade={tradeOffer?.toPlayerId === 2 && tradeOffer?.status === 'sent' && currentPlayerId === 2}
             />
           </>
         )}
@@ -1711,18 +1735,20 @@ const App: FC = () => {
           </motion.div>
         )}
 
-                  <ChatSystem messages={messages} onSendMessage={handleSendMessage} />
+        <ChatSystem messages={messages} onSendMessage={handleSendMessage} />
       </div>
 
-      <TradeModal 
-        offer={tradeOffer}
-        players={players}
-        currentPlayerId={currentPlayerId}
-        onClose={() => setTradeOffer(null)}
-        onAccept={handleAcceptTrade}
-        onDecline={handleDeclineTrade}
-        onSendOffer={handleSendTradeOffer}
-      />
+      {showTradeModal && (
+        <TradeModal 
+          offer={tradeOffer}
+          players={players}
+          currentPlayerId={currentPlayerId}
+          onClose={() => setShowTradeModal(false)}
+          onAccept={handleAcceptTrade}
+          onDecline={handleDeclineTrade}
+          onSendOffer={handleSendTradeOffer}
+        />
+      )}
     </>
   );
 };
