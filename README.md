@@ -1,69 +1,121 @@
-# React + TypeScript + Vite
+# Board Game Adventure
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, interactive 2-player board game built with React, featuring:
 
-Currently, two official plugins are available:
+- **Animated 4x4 (desktop) or 3x3 (mobile) board**
+- **Real-time chat with emoji shortcuts**
+- **Player-to-player trading system**
+- **Interactive onboarding tutorial**
+- **Responsive design for desktop and mobile**
+- **Framer Motion animations and beautiful UI**
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## Expanding the ESLint configuration
+## 🎮 How to Play
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Objective
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Be the first to reach the last square on the board **or** win if your opponent runs out of money.
+- Each player starts with **$100**. Each game costs **$25** to play.
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+### Gameplay
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. **Roll the Dice**
+   - Desktop: Click the "Roll Dice" button.
+   - Mobile: Swipe up on the board or tap "Roll".
+   - Move your piece forward by the dice value (1-6 desktop, 1-4 mobile).
+
+2. **Collect Money**
+   - Some squares have bonus money. Land on them to collect!
+
+3. **Trading**
+   - Click the "Trade" button on your opponent's panel to offer money.
+   - You can send a message with your offer.
+   - The other player can accept or decline on their turn.
+
+4. **Chat**
+   - Use the chat panel to communicate.
+   - Type emoji shortcuts like `(dice)`, `(win)`, `(money)`, `(party)` for fun icons.
+
+5. **Winning**
+   - Reach the last square to win $20 bonus!
+   - If a player can't pay the $25 entry fee for a rematch, the other wins the tournament.
+
+---
+
+## ✨ Features
+
+- **Animated Board & Pieces:** Smooth transitions and effects.
+- **Money Squares:** Random bonus squares each game.
+- **Trading System:** Send/receive money offers with messages.
+- **Chat System:** Emoji shortcuts, quick emoji panel, and full-screen chat on mobile.
+- **Interactive Tutorial:** Step-by-step onboarding with highlights and arrows.
+- **Responsive Design:** Optimized for both desktop and mobile.
+- **Rematch & Restart:** Play again or restart from scratch.
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js (v16+ recommended)
+- yarn
+
+### Installation
+
+```bash
+yarn install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Running the App
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+yarn dev
 ```
+
+- Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+---
+
+## 📝 Emoji Shortcuts
+
+Type these in chat for fun icons:
+
+| Shortcut      | Emoji | Shortcut      | Emoji |
+|---------------|-------|--------------|-------|
+| (dice)        | 🎲    | (win)        | 🏆    |
+| (trade)       | 🤝    | (money)      | 💰    |
+| (sad)         | 😢    | (happy)      | 😊    |
+| (fire)        | 🔥    | (heart)      | ❤️    |
+| (laugh)       | 😂    | (cool)       | 😎    |
+| (think)       | 🤔    | (wow)        | 😮    |
+| (party)       | 🎉    | (rocket)     | 🚀    |
+| (star)        | ⭐    | (thumbs)     | 👍    |
+| (clap)        | 👏    | (boom)       | 💥    |
+| (sparkle)     | ✨    | (gem)        | 💎    |
+
+---
+
+## 🛠️ Tech Stack
+
+- **React** (TypeScript)
+- **Framer Motion** (animations)
+- **React Icons**
+- **Vite** (build tool)
+
+---
+
+## 📚 Code Structure
+
+- `src/App.tsx` – Main app logic and all components
+- `src/assets/` – Images and SVGs
+- `public/` – Static files
+
+---
+
+## �� License
+
+MIT
+
+---
