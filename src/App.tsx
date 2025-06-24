@@ -5,7 +5,9 @@ import {
   FaDiceOne, FaDiceTwo, FaDiceThree, FaDiceFour, FaDiceFive, FaDiceSix,
   FaGamepad, FaComments, FaHandshake, FaTrophy, FaPlay,
   FaPause, FaVolumeUp, FaVolumeMute, FaCog, FaPaperPlane,
-  FaSmile, FaLaugh, FaHeart, FaFire, FaStar
+  FaSmile, FaLaugh, FaHeart, FaFire, FaStar, FaInfoCircle,
+  FaArrowRight, FaCheckCircle, FaTimes, FaCoins, FaUsers,
+  FaArrowDown, FaArrowUp, FaMousePointer
 } from 'react-icons/fa';
 import { IoClose, IoSwapHorizontal, IoSend } from 'react-icons/io5';
 
@@ -94,7 +96,7 @@ const EMOJI_SHORTCUTS: Record<string, string> = {
  * Get the appropriate dice icon for a roll value
  */
 const getDiceIcon = (value: number) => {
-  const icons = [FaDiceOne, FaDiceTwo, FaDiceThree, FaDiceFour];
+  const icons = [FaDiceOne, FaDiceTwo, FaDiceThree, FaDiceFour, FaDiceFive, FaDiceSix];
   return icons[value - 1] || FaDiceOne;
 };
 
@@ -693,6 +695,313 @@ const TradeModal: FC<TradeModalProps> = ({ offer, players, currentPlayerId, onCl
     );
 };
 
+//--- Interactive Tutorial Component ---
+interface InteractiveTutorialProps {
+  step: number;
+  onNext: () => void;
+  onPrev: () => void;
+  onClose: () => void;
+  isMobile: boolean;
+  boardRef: React.RefObject<HTMLDivElement | null>;
+  totalSquares: number;
+}
+
+const InteractiveTutorial: FC<InteractiveTutorialProps> = ({ 
+  step, 
+  onNext, 
+  onPrev, 
+  onClose, 
+  isMobile,
+  boardRef,
+  totalSquares
+}) => {
+  const [highlightBounds, setHighlightBounds] = useState<DOMRect | null>(null);
+  const [arrowPosition, setArrowPosition] = useState<{x: number, y: number} | null>(null);
+
+  const tutorialSteps = [
+    {
+      title: "Welcome to Board Game Adventure! 🎲",
+      content: "This is a 2-player strategic board game. Let me show you how everything works!",
+      highlight: "",
+      arrow: "",
+      position: "center"
+    },
+    {
+      title: "Game Objective 🏆",
+      content: `Your goal is to be the first player to reach position ${totalSquares} (the last square) and win $50! You can also win if your opponent runs out of money.`,
+      highlight: "",
+      arrow: "",
+      position: "center"
+    },
+    {
+      title: "Starting Money 💰",
+      content: "Each player starts with $100. Each game costs $25 to play. Look at your money in the player panel!",
+      highlight: ".player-panel",
+      arrow: "left",
+      position: "right"
+    },
+    {
+      title: "The Game Board 🗺️",
+      content: `This is the game board with ${totalSquares} positions. You start at position 1 and need to reach position ${totalSquares}.`,
+      highlight: ".game-board",
+      arrow: "top",
+      position: "bottom"
+    },
+    {
+      title: "Your Game Piece 👤",
+      content: "These colored circles are your game pieces. Each player has a different color and starts at position 1.",
+      highlight: ".game-piece",
+      arrow: "top",
+      position: "bottom"
+    },
+    {
+      title: "Money Squares 💎",
+      content: "Some squares have money on them! When you land on these, you collect the bonus money shown.",
+      highlight: ".money-indicator",
+      arrow: "top",
+      position: "bottom"
+    },
+    {
+      title: "Rolling the Dice 🎲",
+      content: `${isMobile ? "Swipe up on the board or tap the 'Roll' button" : "Click the 'Roll Dice' button"} to move 1-${isMobile ? '4' : '6'} spaces forward. You can only move on your turn!`,
+      highlight: isMobile ? ".controls button:first-child" : ".controls button:first-child",
+      arrow: "top",
+      position: "bottom"
+    },
+    {
+      title: "Player Trading 🤝",
+      content: "You can send money to your opponent! Click their 'Trade' button to make an offer. This can be strategic!",
+      highlight: ".trade-button",
+      arrow: "right",
+      position: "bottom"
+    },
+    {
+      title: "Chat System 💬",
+      content: `${isMobile ? "Tap the chat button to communicate" : "Use the chat panel"} to talk with your opponent. Try typing emoji shortcuts like (dice) (win) (money)!`,
+      highlight: isMobile ? ".floating-chat-button" : ".chat-system",
+      arrow: isMobile ? "left" : "bottom",
+      position: isMobile ? "right" : "top"
+    },
+    {
+      title: "Winning the Game 🏅",
+      content: `Reach position ${totalSquares} to win $50! Keep playing rounds until someone can't afford the $25 entry fee. Good luck!`,
+      highlight: "",
+      arrow: "",
+      position: "center"
+    }
+  ];
+
+  useEffect(() => {
+    const updateHighlight = () => {
+      const currentStep = tutorialSteps[step];
+      if (currentStep.highlight) {
+        const element = document.querySelector(currentStep.highlight);
+        if (element) {
+          const bounds = element.getBoundingClientRect();
+          setHighlightBounds(bounds);
+          
+          // Calculate arrow position based on element position
+          let arrowX = bounds.left + bounds.width / 2;
+          let arrowY = bounds.top + bounds.height / 2;
+          
+          if (currentStep.arrow === 'top') {
+            arrowY = bounds.top - 40;
+          } else if (currentStep.arrow === 'bottom') {
+            arrowY = bounds.bottom + 40;
+          } else if (currentStep.arrow === 'left') {
+            arrowX = bounds.left - 40;
+          } else if (currentStep.arrow === 'right') {
+            arrowX = bounds.right + 40;
+          }
+          
+          setArrowPosition({ x: arrowX, y: arrowY });
+        }
+      } else {
+        setHighlightBounds(null);
+        setArrowPosition(null);
+      }
+    };
+
+    updateHighlight();
+    
+    // Update on resize
+    window.addEventListener('resize', updateHighlight);
+    return () => window.removeEventListener('resize', updateHighlight);
+  }, [step, tutorialSteps]);
+
+  const currentStep = tutorialSteps[step];
+  const isLastStep = step === tutorialSteps.length - 1;
+  const isFirstStep = step === 0;
+
+  // Calculate smart positioning for tutorial card
+  const getCardPosition = (position: string, bounds: DOMRect | null, isMobile: boolean): React.CSSProperties => {
+    if (!bounds) {
+      return {
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+      };
+    }
+
+    const cardWidth = isMobile ? Math.min(350, window.innerWidth - 40) : 400;
+    const cardHeight = 350; // Increased for better estimation
+    const padding = 20;
+
+    let style: React.CSSProperties = {
+      position: 'fixed',
+      width: cardWidth,
+      maxWidth: cardWidth,
+    };
+
+    switch (position) {
+      case 'top':
+        style.bottom = window.innerHeight - bounds.top + padding;
+        style.left = Math.max(padding, Math.min(window.innerWidth - cardWidth - padding, bounds.left + bounds.width / 2 - cardWidth / 2));
+        break;
+      case 'bottom':
+        style.top = bounds.bottom + padding;
+        style.left = Math.max(padding, Math.min(window.innerWidth - cardWidth - padding, bounds.left + bounds.width / 2 - cardWidth / 2));
+        break;
+      case 'left':
+        // For left positioning, make sure we don't go off screen
+        const leftPosition = Math.max(bounds.left - cardWidth - padding, padding);
+        style.left = leftPosition;
+        style.top = Math.max(padding, Math.min(window.innerHeight - cardHeight - padding, bounds.top + bounds.height / 2 - cardHeight / 2));
+        break;
+      case 'right':
+        // For right positioning, check if there's enough space, otherwise position to the left
+        const rightSpace = window.innerWidth - bounds.right;
+        if (rightSpace >= cardWidth + padding * 2) {
+          style.left = bounds.right + padding;
+        } else {
+          // Not enough space on the right, position to the left
+          style.left = Math.max(padding, bounds.left - cardWidth - padding);
+        }
+        style.top = Math.max(padding, Math.min(window.innerHeight - cardHeight - padding, bounds.top + bounds.height / 2 - cardHeight / 2));
+        break;
+      default: // center
+        style.top = '50%';
+        style.left = '50%';
+        style.transform = 'translate(-50%, -50%)';
+    }
+
+    // Final safety check to ensure card stays on screen
+    if (style.left && typeof style.left === 'number') {
+      style.left = Math.max(padding, Math.min(window.innerWidth - cardWidth - padding, style.left));
+    }
+    if (style.top && typeof style.top === 'number') {
+      style.top = Math.max(padding, Math.min(window.innerHeight - cardHeight - padding, style.top));
+    }
+
+    return style;
+  };
+
+  return (
+    <div className="tutorial-overlay">
+      {/* Highlight overlay */}
+      {highlightBounds && (
+        <>
+          {/* Blurred backdrop with cutout */}
+          <div 
+            className="tutorial-backdrop-with-cutout"
+            style={{
+              clipPath: `polygon(
+                0% 0%, 
+                0% 100%, 
+                ${highlightBounds.left - 8}px 100%, 
+                ${highlightBounds.left - 8}px ${highlightBounds.top - 8}px, 
+                ${highlightBounds.right + 8}px ${highlightBounds.top - 8}px, 
+                ${highlightBounds.right + 8}px ${highlightBounds.bottom + 8}px, 
+                ${highlightBounds.left - 8}px ${highlightBounds.bottom + 8}px, 
+                ${highlightBounds.left - 8}px 100%, 
+                100% 100%, 
+                100% 0%
+              )`
+            }}
+          ></div>
+          {/* Glowing border around clear area */}
+          <div 
+            className="tutorial-spotlight" 
+            style={{
+              left: highlightBounds.left - 8,
+              top: highlightBounds.top - 8,
+              width: highlightBounds.width + 16,
+              height: highlightBounds.height + 16,
+            }}
+          ></div>
+        </>
+      )}
+      
+      {/* Arrow pointing to highlighted element */}
+      {arrowPosition && currentStep.arrow && (
+        <div 
+          className="tutorial-arrow"
+          style={{
+            left: arrowPosition.x - 16,
+            top: arrowPosition.y - 16,
+          }}
+        >
+          {currentStep.arrow === 'top' && <FaArrowDown />}
+          {currentStep.arrow === 'bottom' && <FaArrowUp />}
+          {currentStep.arrow === 'left' && <FaArrowRight />}
+          {currentStep.arrow === 'right' && <FaMousePointer />}
+        </div>
+      )}
+
+      {/* Tutorial step card */}
+      <motion.div 
+        className="tutorial-step-card"
+        style={getCardPosition(currentStep.position, highlightBounds, isMobile)}
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="tutorial-step-header">
+          <h3>{currentStep.title}</h3>
+          <button className="tutorial-close-btn" onClick={onClose}>
+            <FaTimes />
+          </button>
+        </div>
+        
+        <div className="tutorial-step-content">
+          <p>{currentStep.content}</p>
+        </div>
+
+        <div className="tutorial-step-footer">
+          <div className="tutorial-progress">
+            <span>{step + 1} of {tutorialSteps.length}</span>
+            <div className="tutorial-progress-bar">
+              <div 
+                className="tutorial-progress-fill" 
+                style={{ width: `${((step + 1) / tutorialSteps.length) * 100}%` }}
+              />
+            </div>
+          </div>
+          
+          <div className="tutorial-step-buttons">
+            {!isFirstStep && (
+              <button onClick={onPrev} className="tutorial-btn tutorial-btn-secondary">
+                Previous
+              </button>
+            )}
+            
+            {isLastStep ? (
+              <button onClick={onClose} className="tutorial-btn tutorial-btn-primary">
+                Start Playing! 🚀
+              </button>
+            ) : (
+              <button onClick={onNext} className="tutorial-btn tutorial-btn-primary">
+                Next <FaArrowRight />
+              </button>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 
 //================================================================================
 // 5. MAIN APP COMPONENT
@@ -715,6 +1024,8 @@ const App: FC = () => {
   const [gameNumber, setGameNumber] = useState(1);
   const [turnNumber, setTurnNumber] = useState(1);
   const [isChatFullScreen, setIsChatFullScreen] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(!isMobile);
+  const [tutorialStep, setTutorialStep] = useState(0);
   
   const boardRef = useRef<HTMLDivElement>(null);
 
@@ -749,21 +1060,25 @@ const App: FC = () => {
     
     setIsRolling(true);
     
+    // Use different dice ranges based on board size
+    const maxDiceValue = isMobile ? 4 : 6; // Mobile: 1-4, Desktop: 1-6
+    const winPosition = totalSquares - 1; // Last square index (8 for mobile, 15 for desktop)
+    
     // Simulate dice rolling animation
     const rollAnimation = setInterval(() => {
-      setDiceResult(Math.floor(Math.random() * 4) + 1);
+      setDiceResult(Math.floor(Math.random() * maxDiceValue) + 1);
     }, 100);
     
     setTimeout(() => {
       clearInterval(rollAnimation);
-      const finalRoll = Math.floor(Math.random() * 4) + 1;
+      const finalRoll = Math.floor(Math.random() * maxDiceValue) + 1;
       setDiceResult(finalRoll);
       setIsRolling(false);
       addSystemMessage(`${players[currentPlayerId].name} rolled a ${finalRoll} (dice)`);
 
       setPlayers(prevPlayers => {
           const currentPlayer = prevPlayers[currentPlayerId];
-          const newPosition = Math.min(currentPlayer.piecePosition + finalRoll, 8); // Win at position 9 (index 8)
+          const newPosition = Math.min(currentPlayer.piecePosition + finalRoll, winPosition);
           
           addSystemMessage(`${currentPlayer.name} moved to position ${newPosition + 1}`);
           
@@ -779,11 +1094,11 @@ const App: FC = () => {
             ));
           }
 
-          if (newPosition >= 8) { // Win at position 9 (index 8)
+          if (newPosition >= winPosition) {
               setIsGameOver(true);
               setGameOverReason('win');
               updatedPlayer.money += 20; // Winner prize
-              addSystemMessage(`${currentPlayer.name} reached position 9 and won the game! Earned $20 prize! (win) (party)`);
+              addSystemMessage(`${currentPlayer.name} reached position ${totalSquares} and won the game! Earned $20 prize! (win) (party)`);
           }
           
           return {
@@ -792,7 +1107,7 @@ const App: FC = () => {
           };
       });
     }, 1000);
-  }, [currentPlayerId, players, isGameOver, isRolling, addSystemMessage, moneySquares]);
+  }, [currentPlayerId, players, isGameOver, isRolling, addSystemMessage, moneySquares, isMobile, totalSquares]);
 
   const handleEndTurn = () => {
     if(isGameOver) return;
@@ -955,6 +1270,24 @@ const App: FC = () => {
     setShowTradeModal(false);
     setMessages([]);
     addSystemMessage("Game restarted from the beginning! Both players start with $100. (party)");
+  };
+
+  // Tutorial handlers
+  const handleTutorialNext = () => {
+    if (tutorialStep < 9) {
+      setTutorialStep(prev => prev + 1);
+    }
+  };
+
+  const handleTutorialPrev = () => {
+    if (tutorialStep > 0) {
+      setTutorialStep(prev => prev - 1);
+    }
+  };
+
+  const handleTutorialClose = () => {
+    setShowTutorial(false);
+    setTutorialStep(0);
   };
 
   // Check if any player has $0
@@ -1730,15 +2063,204 @@ const App: FC = () => {
           background: var(--gradient-primary);
         }
         
-        /* Restart button specific styles */
-        button[style*="linear-gradient(135deg, #ff6b6b, #ff8e53)"] {
-          border: none !important;
-          box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3) !important;
-        }
-        button[style*="linear-gradient(135deg, #ff6b6b, #ff8e53)"]:hover {
-          box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4) !important;
-          background: linear-gradient(135deg, #ff5252, #ff7043) !important;
-        }
+                 /* Restart button specific styles */
+         button[style*="linear-gradient(135deg, #ff6b6b, #ff8e53)"] {
+           border: none !important;
+           box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3) !important;
+         }
+         button[style*="linear-gradient(135deg, #ff6b6b, #ff8e53)"]:hover {
+           box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4) !important;
+           background: linear-gradient(135deg, #ff5252, #ff7043) !important;
+         }
+
+         /* Interactive Tutorial Styles */
+         .tutorial-overlay {
+           position: fixed;
+           top: 0;
+           left: 0;
+           right: 0;
+           bottom: 0;
+           z-index: 1500;
+           pointer-events: none;
+         }
+
+         .tutorial-backdrop-with-cutout {
+           position: fixed;
+           top: 0;
+           left: 0;
+           right: 0;
+           bottom: 0;
+           background: rgba(0, 0, 0, 0.7);
+           backdrop-filter: blur(3px);
+           pointer-events: none;
+           z-index: 1501;
+         }
+
+         .tutorial-spotlight {
+           position: fixed;
+           border: 3px solid #57B9FF;
+           border-radius: 12px;
+           box-shadow: 0 0 0 4px rgba(87, 185, 255, 0.3), 0 0 20px rgba(87, 185, 255, 0.5);
+           animation: tutorialPulse 2s infinite;
+           pointer-events: none;
+           z-index: 1502;
+           background: transparent;
+         }
+
+         @keyframes tutorialPulse {
+           0%, 100% { 
+             box-shadow: 0 0 0 4px rgba(87, 185, 255, 0.3), 0 0 20px rgba(87, 185, 255, 0.5);
+             transform: scale(1);
+           }
+           50% { 
+             box-shadow: 0 0 0 8px rgba(87, 185, 255, 0.2), 0 0 30px rgba(87, 185, 255, 0.7);
+             transform: scale(1.02);
+           }
+         }
+
+         .tutorial-arrow {
+           position: fixed;
+           font-size: 2rem;
+           color: #57B9FF;
+           z-index: 1503;
+           animation: tutorialBounce 1.5s infinite;
+           pointer-events: none;
+           text-shadow: 0 0 10px rgba(87, 185, 255, 0.8);
+           width: 32px;
+           height: 32px;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+         }
+
+         @keyframes tutorialBounce {
+           0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+           40% { transform: translateY(-10px); }
+           60% { transform: translateY(-5px); }
+         }
+
+         .tutorial-step-card {
+           background: rgba(255, 255, 255, 0.98);
+           backdrop-filter: blur(20px);
+           border-radius: 20px;
+           padding: 24px;
+           max-width: 400px;
+           box-shadow: var(--shadow-lg);
+           border: 2px solid var(--color-medium);
+           pointer-events: all;
+           z-index: 1504;
+         }
+
+         .tutorial-step-header {
+           display: flex;
+           justify-content: space-between;
+           align-items: center;
+           margin-bottom: 16px;
+           padding-bottom: 12px;
+           border-bottom: 2px solid var(--color-light);
+         }
+
+         .tutorial-step-header h3 {
+           margin: 0;
+           color: var(--color-dark);
+           font-size: 1.3rem;
+           font-weight: 600;
+         }
+
+         .tutorial-close-btn {
+           background: transparent;
+           border: none;
+           color: var(--color-text);
+           font-size: 1.2rem;
+           cursor: pointer;
+           padding: 4px;
+           border-radius: 50%;
+           transition: all 0.3s ease;
+         }
+
+         .tutorial-close-btn:hover {
+           background: rgba(var(--color-light), 0.3);
+           color: var(--color-dark);
+           transform: scale(1.1);
+         }
+
+         .tutorial-step-content p {
+           margin: 0;
+           color: var(--color-text);
+           line-height: 1.6;
+           font-size: 1rem;
+         }
+
+         .tutorial-step-footer {
+           margin-top: 20px;
+         }
+
+         .tutorial-progress {
+           display: flex;
+           align-items: center;
+           gap: 12px;
+           margin-bottom: 16px;
+         }
+
+         .tutorial-progress span {
+           color: var(--color-text);
+           font-size: 0.9rem;
+           font-weight: 600;
+           min-width: 70px;
+         }
+
+         .tutorial-progress-bar {
+           flex: 1;
+           height: 6px;
+           background: rgba(var(--color-light), 0.3);
+           border-radius: 3px;
+           overflow: hidden;
+         }
+
+         .tutorial-progress-fill {
+           height: 100%;
+           background: var(--gradient-primary);
+           border-radius: 3px;
+           transition: width 0.5s ease;
+         }
+
+         .tutorial-step-buttons {
+           display: flex;
+           gap: 12px;
+           justify-content: flex-end;
+         }
+
+         .tutorial-btn {
+           padding: 10px 20px;
+           border: none;
+           border-radius: 12px;
+           font-weight: 600;
+           cursor: pointer;
+           transition: all 0.3s ease;
+           display: flex;
+           align-items: center;
+           gap: 8px;
+         }
+
+         .tutorial-btn-primary {
+           background: var(--gradient-primary);
+           color: white;
+         }
+
+         .tutorial-btn-primary:hover {
+           transform: translateY(-2px);
+           box-shadow: var(--shadow-md);
+         }
+
+         .tutorial-btn-secondary {
+           background: rgba(var(--color-light), 0.3);
+           color: var(--color-dark);
+         }
+
+         .tutorial-btn-secondary:hover {
+           background: rgba(var(--color-light), 0.5);
+           transform: translateY(-1px);
+         }
 
         /* MOBILE LAYOUT */
         @media (max-width: 768px) {
@@ -1960,13 +2482,13 @@ const App: FC = () => {
           .chat-system {
             padding: 10px;
           }
-          .modal-content {
-            width: calc(100vw - 12px);
-            padding: 12px;
-            margin: 6px;
-          }
-        }
-      `}</style>
+                     .modal-content {
+             width: calc(100vw - 12px);
+             padding: 12px;
+             margin: 6px;
+           }
+         }
+       `}</style>
       <div className="main-container" style={{ display: isMobile && isChatFullScreen ? 'none' : 'grid' }}>
         {isMobile ? (
           <div className="player-panels-container">
@@ -2202,7 +2724,7 @@ const App: FC = () => {
           />
         )}
       </div>
-
+        
       {isMobile && !isChatFullScreen && (
         <motion.button
           className="floating-chat-button"
@@ -2240,6 +2762,18 @@ const App: FC = () => {
           onAccept={handleAcceptTrade}
           onDecline={handleDeclineTrade}
           onSendOffer={handleSendTradeOffer}
+        />
+      )}
+
+      {showTutorial && (
+        <InteractiveTutorial
+          step={tutorialStep}
+          onNext={handleTutorialNext}
+          onPrev={handleTutorialPrev}
+          onClose={handleTutorialClose}
+          isMobile={isMobile}
+          boardRef={boardRef}
+          totalSquares={totalSquares}
         />
       )}
     </>
