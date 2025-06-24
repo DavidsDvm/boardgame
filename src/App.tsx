@@ -274,8 +274,9 @@ interface PlayerPanelProps {
   className?: string;
   hasPendingTrade?: boolean;
   hasIncomingTrade?: boolean;
+  isGameOver?: boolean;
 }
-const PlayerPanel: FC<PlayerPanelProps> = ({ player, isCurrentPlayer, onTrade, className, hasPendingTrade, hasIncomingTrade }) => {
+const PlayerPanel: FC<PlayerPanelProps> = ({ player, isCurrentPlayer, onTrade, className, hasPendingTrade, hasIncomingTrade, isGameOver }) => {
   return (
     <motion.div 
       className={`player-panel ${isCurrentPlayer ? 'active' : ''} ${className || ''}`}
@@ -311,12 +312,13 @@ const PlayerPanel: FC<PlayerPanelProps> = ({ player, isCurrentPlayer, onTrade, c
              <motion.button 
          className={`trade-button ${hasPendingTrade || hasIncomingTrade ? 'pending-trade' : ''}`}
          onClick={() => onTrade(player.id)}
-         whileHover={{ scale: 1.05 }}
-         whileTap={{ scale: 0.95 }}
+         disabled={isGameOver}
+         whileHover={!isGameOver ? { scale: 1.05 } : {}}
+         whileTap={!isGameOver ? { scale: 0.95 } : {}}
        >
          <FaHandshake /> 
-         {hasIncomingTrade ? 'Respond to Trade' : hasPendingTrade ? 'Pending Trade' : 'Trade'}
-         {(hasPendingTrade || hasIncomingTrade) && <span className="trade-notification">!</span>}
+         {isGameOver ? 'Game Over' : hasIncomingTrade ? 'Respond to Trade' : hasPendingTrade ? 'Pending Trade' : 'Trade'}
+         {(hasPendingTrade || hasIncomingTrade) && !isGameOver && <span className="trade-notification">!</span>}
        </motion.button>
     </motion.div>
   );
@@ -691,6 +693,7 @@ const App: FC = () => {
   const [tradeOffer, setTradeOffer] = useState<TradeOffer | null>(null);
   const [showTradeModal, setShowTradeModal] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
+  const [gameOverReason, setGameOverReason] = useState<'win' | 'bankruptcy' | null>(null);
   const [moneySquares, setMoneySquares] = useState<MoneySquare[]>([]);
   const [gameNumber, setGameNumber] = useState(1);
   const [turnNumber, setTurnNumber] = useState(1);
@@ -758,6 +761,7 @@ const App: FC = () => {
 
           if (newPosition >= totalSquares - 1) {
               setIsGameOver(true);
+              setGameOverReason('win');
               updatedPlayer.money += 20; // Winner prize
               addSystemMessage(`${currentPlayer.name} has won the game and earned $20 prize! (win) (party)`);
           }
@@ -904,11 +908,27 @@ const App: FC = () => {
     setCurrentPlayerId(1);
     setDiceResult(null);
     setIsGameOver(false);
+    setGameOverReason(null);
     setGameNumber(prev => prev + 1);
     setTurnNumber(1);
     setTradeOffer(null); // Clear any pending trades
     setShowTradeModal(false);
     addSystemMessage("New game started! Each player paid $25 entry fee. (party)");
+  };
+
+  const handleRestartFromBeginning = () => {
+    // Reset everything to initial state
+    setPlayers(INITIAL_PLAYERS);
+    setCurrentPlayerId(1);
+    setDiceResult(null);
+    setIsGameOver(false);
+    setGameOverReason(null);
+    setGameNumber(1);
+    setTurnNumber(1);
+    setTradeOffer(null);
+    setShowTradeModal(false);
+    setMessages([]);
+    addSystemMessage("Game restarted from the beginning! Both players start with $100. (party)");
   };
 
   // Check if any player has $0
@@ -919,12 +939,15 @@ const App: FC = () => {
     if (player1.money <= 0 && player2.money <= 0) {
       addSystemMessage("Both players are out of money! Game over! (sad)");
       setIsGameOver(true);
+      setGameOverReason('bankruptcy');
     } else if (player1.money <= 0) {
       addSystemMessage(`${player1.name} is out of money! ${player2.name} wins the tournament! (win)`);
       setIsGameOver(true);
+      setGameOverReason('bankruptcy');
     } else if (player2.money <= 0) {
       addSystemMessage(`${player2.name} is out of money! ${player1.name} wins the tournament! (win)`);
       setIsGameOver(true);
+      setGameOverReason('bankruptcy');
     }
   }, [players, addSystemMessage]);
 
@@ -1495,6 +1518,16 @@ const App: FC = () => {
         .modal-actions button.confirm {
           background: var(--gradient-primary);
         }
+        
+        /* Restart button specific styles */
+        button[style*="linear-gradient(135deg, #ff6b6b, #ff8e53)"] {
+          border: none !important;
+          box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3) !important;
+        }
+        button[style*="linear-gradient(135deg, #ff6b6b, #ff8e53)"]:hover {
+          box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4) !important;
+          background: linear-gradient(135deg, #ff5252, #ff7043) !important;
+        }
 
         /* MOBILE LAYOUT */
         @media (max-width: 767px) {
@@ -1546,6 +1579,7 @@ const App: FC = () => {
               onTrade={handleInitiateTrade} 
               hasPendingTrade={tradeOffer?.fromPlayerId === 1 && tradeOffer?.status === 'sent'}
               hasIncomingTrade={tradeOffer?.toPlayerId === 1 && tradeOffer?.status === 'sent' && currentPlayerId === 1}
+              isGameOver={isGameOver}
             />
             <PlayerPanel 
               player={player2} 
@@ -1553,6 +1587,7 @@ const App: FC = () => {
               onTrade={handleInitiateTrade} 
               hasPendingTrade={tradeOffer?.fromPlayerId === 2 && tradeOffer?.status === 'sent'}
               hasIncomingTrade={tradeOffer?.toPlayerId === 2 && tradeOffer?.status === 'sent' && currentPlayerId === 2}
+              isGameOver={isGameOver}
             />
           </div>
         ) : (
@@ -1563,6 +1598,7 @@ const App: FC = () => {
               onTrade={handleInitiateTrade} 
               hasPendingTrade={tradeOffer?.fromPlayerId === 1 && tradeOffer?.status === 'sent'}
               hasIncomingTrade={tradeOffer?.toPlayerId === 1 && tradeOffer?.status === 'sent' && currentPlayerId === 1}
+              isGameOver={isGameOver}
             />
             <PlayerPanel 
               player={player2} 
@@ -1571,6 +1607,7 @@ const App: FC = () => {
               className="p2" 
               hasPendingTrade={tradeOffer?.fromPlayerId === 2 && tradeOffer?.status === 'sent'}
               hasIncomingTrade={tradeOffer?.toPlayerId === 2 && tradeOffer?.status === 'sent' && currentPlayerId === 2}
+              isGameOver={isGameOver}
             />
           </>
         )}
@@ -1607,14 +1644,30 @@ const App: FC = () => {
                   {players[player1.piecePosition === totalSquares - 1 ? 1: 2].name} Wins!
                 </h2>
                 <p style={{color: CALM_BLUE_PALETTE.text, margin: "8px 0"}}>🎉 Congratulations! 🎉</p>
-                <motion.button
-                  onClick={handleRematch}
-                  style={{marginTop: "16px"}}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <FaPlay /> Play Again ($25 each)
-                </motion.button>
+                
+                <div style={{display: "flex", gap: "12px", justifyContent: "center", marginTop: "16px"}}>
+                  {gameOverReason === 'win' ? (
+                    <motion.button
+                      onClick={handleRematch}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <FaPlay /> Play Again ($25 each)
+                    </motion.button>
+                  ) : (
+                    <motion.button
+                      onClick={handleRestartFromBeginning}
+                      style={{
+                        background: "linear-gradient(135deg, #ff6b6b, #ff8e53)",
+                        color: "white"
+                      }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      🔄 Restart from Beginning
+                    </motion.button>
+                  )}
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
