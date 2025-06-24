@@ -1,13 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { type FC, type CSSProperties } from 'react';
+import { type FC } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
+import {
   FaDiceOne, FaDiceTwo, FaDiceThree, FaDiceFour, FaDiceFive, FaDiceSix,
   FaGamepad, FaComments, FaHandshake, FaTrophy, FaPlay,
-  FaPause, FaVolumeUp, FaVolumeMute, FaCog, FaPaperPlane,
-  FaSmile, FaLaugh, FaHeart, FaFire, FaStar, FaInfoCircle,
-  FaArrowRight, FaCheckCircle, FaTimes, FaCoins, FaUsers,
-  FaArrowDown, FaArrowUp, FaMousePointer
+  FaSmile, FaArrowRight, FaTimes, FaArrowDown, FaArrowUp, FaMousePointer
 } from 'react-icons/fa';
 import { IoClose, IoSwapHorizontal, IoSend } from 'react-icons/io5';
 
@@ -107,13 +104,13 @@ const generateMoneySquares = (totalSquares: number): MoneySquare[] => {
   const moneySquares: MoneySquare[] = [];
   const numMoneySquares = Math.floor(totalSquares * 0.3); // 30% of squares have money
   const usedPositions = new Set<number>();
-  
+
   for (let i = 0; i < numMoneySquares; i++) {
     let position;
     do {
       position = Math.floor(Math.random() * (totalSquares - 1)) + 1; // Exclude start position
     } while (usedPositions.has(position));
-    
+
     usedPositions.add(position);
     moneySquares.push({
       position,
@@ -121,7 +118,7 @@ const generateMoneySquares = (totalSquares: number): MoneySquare[] => {
       collected: false
     });
   }
-  
+
   return moneySquares;
 };
 
@@ -169,31 +166,31 @@ const useIsMobile = () => {
  * Custom hook for swipe detection on touch devices
  */
 const useSwipe = (onSwipe: (direction: 'left' | 'right' | 'up' | 'down') => void) => {
-    const touchStart = useRef<{ x: number, y: number } | null>(null);
+  const touchStart = useRef<{ x: number, y: number } | null>(null);
 
-    const handleTouchStart = (e: React.TouchEvent) => {
-        const firstTouch = e.touches[0];
-        touchStart.current = { x: firstTouch.clientX, y: firstTouch.clientY };
-    };
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const firstTouch = e.touches[0];
+    touchStart.current = { x: firstTouch.clientX, y: firstTouch.clientY };
+  };
 
-    const handleTouchMove = (e: React.TouchEvent) => {
-        if (!touchStart.current) return;
-        const moveX = e.touches[0].clientX;
-        const moveY = e.touches[0].clientY;
-        const diffX = touchStart.current.x - moveX;
-        const diffY = touchStart.current.y - moveY;
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStart.current) return;
+    const moveX = e.touches[0].clientX;
+    const moveY = e.touches[0].clientY;
+    const diffX = touchStart.current.x - moveX;
+    const diffY = touchStart.current.y - moveY;
 
-        if (Math.abs(diffX) > Math.abs(diffY)) {
-            if (diffX > 50) onSwipe('left');
-            else if (diffX < -50) onSwipe('right');
-        } else {
-            if (diffY > 50) onSwipe('up');
-            else if (diffY < -50) onSwipe('down');
-        }
-        touchStart.current = null; // Reset after first swipe detection
-    };
-    
-    return { onTouchStart: handleTouchStart, onTouchMove: handleTouchMove };
+    if (Math.abs(diffX) > Math.abs(diffY)) {
+      if (diffX > 50) onSwipe('left');
+      else if (diffX < -50) onSwipe('right');
+    } else {
+      if (diffY > 50) onSwipe('up');
+      else if (diffY < -50) onSwipe('down');
+    }
+    touchStart.current = null; // Reset after first swipe detection
+  };
+
+  return { onTouchStart: handleTouchStart, onTouchMove: handleTouchMove };
 };
 
 
@@ -222,7 +219,7 @@ interface GamePieceProps {
 const GamePiece: FC<GamePieceProps> = ({ player, boardSize, squareSize }) => {
   const row = Math.floor(player.piecePosition / boardSize);
   const col = player.piecePosition % boardSize;
-  
+
   return (
     <motion.div
       className="game-piece"
@@ -255,16 +252,16 @@ interface BoardSquareProps {
   moneySquare?: MoneySquare;
 }
 const BoardSquare: FC<BoardSquareProps> = ({ index, moneySquare }) => {
-    return (
-      <div className="board-square">
-        <span className="square-number">{index + 1}</span>
-        {moneySquare && !moneySquare.collected && (
-          <div className="money-indicator">
-            💰${moneySquare.amount}
-          </div>
-        )}
-      </div>
-    );
+  return (
+    <div className="board-square">
+      <span className="square-number">{index + 1}</span>
+      {moneySquare && !moneySquare.collected && (
+        <div className="money-indicator">
+          💰${moneySquare.amount}
+        </div>
+      )}
+    </div>
+  );
 }
 
 
@@ -280,7 +277,7 @@ interface PlayerPanelProps {
 }
 const PlayerPanel: FC<PlayerPanelProps> = ({ player, isCurrentPlayer, onTrade, className, hasPendingTrade, hasIncomingTrade, isGameOver }) => {
   return (
-    <motion.div 
+    <motion.div
       className={`player-panel ${isCurrentPlayer ? 'active' : ''} ${className || ''}`}
       style={{ borderColor: player.color }}
       variants={className === 'p2' ? slideInRight : slideInLeft}
@@ -299,29 +296,29 @@ const PlayerPanel: FC<PlayerPanelProps> = ({ player, isCurrentPlayer, onTrade, c
         </div>
         {isCurrentPlayer && <FaPlay className="active-indicator" />}
       </div>
-      
-             <div className="player-stats">
-         <div className="stat-item">
-           <span className="stat-label">Position</span>
-           <span className="stat-value">{player.piecePosition + 1}</span>
-         </div>
-         <div className="stat-item">
-           <span className="stat-label">Money</span>
-           <span className="stat-value money-amount">${player.money}</span>
-         </div>
-       </div>
-      
-             <motion.button 
-         className={`trade-button ${hasPendingTrade || hasIncomingTrade ? 'pending-trade' : ''}`}
-         onClick={() => onTrade(player.id)}
-         disabled={isGameOver}
-         whileHover={!isGameOver ? { scale: 1.05 } : {}}
-         whileTap={!isGameOver ? { scale: 0.95 } : {}}
-       >
-         <FaHandshake /> 
-         {isGameOver ? 'Game Over' : hasIncomingTrade ? 'Respond to Trade' : hasPendingTrade ? 'Pending Trade' : 'Trade'}
-         {(hasPendingTrade || hasIncomingTrade) && !isGameOver && <span className="trade-notification">!</span>}
-       </motion.button>
+
+      <div className="player-stats">
+        <div className="stat-item">
+          <span className="stat-label">Position</span>
+          <span className="stat-value">{player.piecePosition + 1}</span>
+        </div>
+        <div className="stat-item">
+          <span className="stat-label">Money</span>
+          <span className="stat-value money-amount">${player.money}</span>
+        </div>
+      </div>
+
+      <motion.button
+        className={`trade-button ${hasPendingTrade || hasIncomingTrade ? 'pending-trade' : ''}`}
+        onClick={() => onTrade(player.id)}
+        disabled={isGameOver}
+        whileHover={!isGameOver ? { scale: 1.05 } : {}}
+        whileTap={!isGameOver ? { scale: 0.95 } : {}}
+      >
+        <FaHandshake />
+        {isGameOver ? 'Game Over' : hasIncomingTrade ? 'Respond to Trade' : hasPendingTrade ? 'Pending Trade' : 'Trade'}
+        {(hasPendingTrade || hasIncomingTrade) && !isGameOver && <span className="trade-notification">!</span>}
+      </motion.button>
     </motion.div>
   );
 };
@@ -340,8 +337,8 @@ const ChatSystem: FC<ChatSystemProps> = ({ messages, onSendMessage, isFullScreen
   const chatBodyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if(chatBodyRef.current) {
-        chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
+    if (chatBodyRef.current) {
+      chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
     }
   }, [messages]);
 
@@ -361,7 +358,7 @@ const ChatSystem: FC<ChatSystemProps> = ({ messages, onSendMessage, isFullScreen
   };
 
   return (
-    <motion.div 
+    <motion.div
       className={`chat-system ${isFullScreen ? 'chat-fullscreen' : ''}`}
       variants={fadeInUp}
       initial="initial"
@@ -395,7 +392,7 @@ const ChatSystem: FC<ChatSystemProps> = ({ messages, onSendMessage, isFullScreen
 
       <AnimatePresence>
         {showEmojiPanel && (
-          <motion.div 
+          <motion.div
             className="emoji-panel"
             variants={fadeInUp}
             initial="initial"
@@ -423,8 +420,8 @@ const ChatSystem: FC<ChatSystemProps> = ({ messages, onSendMessage, isFullScreen
       <div className="chat-body" ref={chatBodyRef}>
         <AnimatePresence>
           {messages.map((msg, index) => (
-            <motion.div 
-              key={msg.id} 
+            <motion.div
+              key={msg.id}
               className="chat-message"
               variants={fadeInUp}
               initial="initial"
@@ -444,7 +441,7 @@ const ChatSystem: FC<ChatSystemProps> = ({ messages, onSendMessage, isFullScreen
           </div>
         )}
       </div>
-      
+
       <form onSubmit={handleSubmit} className="chat-form">
         <input
           type="text"
@@ -452,7 +449,7 @@ const ChatSystem: FC<ChatSystemProps> = ({ messages, onSendMessage, isFullScreen
           onChange={(e) => setNewMessage(e.target.value)}
           placeholder="Type a message... Use (emoji) shortcuts!"
         />
-        <motion.button 
+        <motion.button
           type="submit"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -466,233 +463,233 @@ const ChatSystem: FC<ChatSystemProps> = ({ messages, onSendMessage, isFullScreen
 
 //--- TradeModal Component ---
 interface TradeModalProps {
-    offer: TradeOffer | null;
-    players: Record<PlayerId, Player>;
-    currentPlayerId: PlayerId;
-    onClose: () => void;
-    onCancel?: () => void;
-    onAccept: () => void;
-    onDecline: () => void;
-    onSendOffer: (amount: number, message: string) => void;
+  offer: TradeOffer | null;
+  players: Record<PlayerId, Player>;
+  currentPlayerId: PlayerId;
+  onClose: () => void;
+  onCancel?: () => void;
+  onAccept: () => void;
+  onDecline: () => void;
+  onSendOffer: (amount: number, message: string) => void;
 }
 const TradeModal: FC<TradeModalProps> = ({ offer, players, currentPlayerId, onClose, onCancel, onAccept, onDecline, onSendOffer }) => {
-    const [tradeAmount, setTradeAmount] = useState(50);
-    const [tradeMessage, setTradeMessage] = useState('');
-    const [isConfirming, setIsConfirming] = useState(false);
-    
-    // Reset form when offer changes
-    useEffect(() => {
-      if (offer) {
-        setTradeAmount(offer.amount);
-        setTradeMessage(offer.message);
-        setIsConfirming(false);
-      }
-    }, [offer]);
-    
-    if (!offer) return null;
-    
-    const fromPlayer = players[offer.fromPlayerId];
-    const toPlayer = players[offer.toPlayerId];
-    const isReceiver = currentPlayerId === offer.toPlayerId;
-    const isSender = currentPlayerId === offer.fromPlayerId;
-    
+  const [tradeAmount, setTradeAmount] = useState(50);
+  const [tradeMessage, setTradeMessage] = useState('');
+  const [isConfirming, setIsConfirming] = useState(false);
 
-    
-    const handleConfirmSend = () => {
-      onSendOffer(tradeAmount, tradeMessage);
-      // Reset form and close immediately
-      setTradeAmount(50);
-      setTradeMessage('');
+  // Reset form when offer changes
+  useEffect(() => {
+    if (offer) {
+      setTradeAmount(offer.amount);
+      setTradeMessage(offer.message);
       setIsConfirming(false);
-      onClose();
-    };
+    }
+  }, [offer]);
 
-    return (
-        <AnimatePresence>
-            <motion.div 
-                className="modal-overlay" 
-                onClick={onClose}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+  if (!offer) return null;
+
+  const fromPlayer = players[offer.fromPlayerId];
+  const toPlayer = players[offer.toPlayerId];
+  const isReceiver = currentPlayerId === offer.toPlayerId;
+  const isSender = currentPlayerId === offer.fromPlayerId;
+
+
+
+  const handleConfirmSend = () => {
+    onSendOffer(tradeAmount, tradeMessage);
+    // Reset form and close immediately
+    setTradeAmount(50);
+    setTradeMessage('');
+    setIsConfirming(false);
+    onClose();
+  };
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        className="modal-overlay"
+        onClick={onClose}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      >
+        <motion.div
+          className="modal-content"
+          onClick={(e: React.MouseEvent) => e.stopPropagation()}
+          variants={scaleIn}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+        >
+          <motion.button
+            className="modal-close-button"
+            onClick={onClose}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <IoClose />
+          </motion.button>
+
+          <div className="modal-header">
+            <FaHandshake className="modal-icon" />
+            <h2>
+              {isReceiver && offer.status === 'sent' ? 'Incoming Trade Offer' :
+                isSender && offer.status === 'sent' ? 'Trade Offer Sent' :
+                  'Send Trade Offer'}
+            </h2>
+          </div>
+
+          <div className="trade-players">
+            <div className="trade-player">
+              <div className="player-avatar" style={{ backgroundColor: fromPlayer.color }}>
+                {fromPlayer.name[0]}
+              </div>
+              <h3>{fromPlayer.name}</h3>
+              <p>Initiating Trade</p>
+            </div>
+
+            <motion.div
+              className="trade-arrow"
+              animate={{ rotate: [0, 180, 360] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
             >
-                                 <motion.div 
-                     className="modal-content" 
-                     onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                    variants={scaleIn}
-                    initial="initial"
-                    animate="animate"
-                    exit="exit"
-                >
-                    <motion.button 
-                        className="modal-close-button" 
-                        onClick={onClose}
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                    >
-                        <IoClose />
-                    </motion.button>
-                    
-                    <div className="modal-header">
-                        <FaHandshake className="modal-icon" />
-                        <h2>
-                          {isReceiver && offer.status === 'sent' ? 'Incoming Trade Offer' : 
-                           isSender && offer.status === 'sent' ? 'Trade Offer Sent' :
-                           'Send Trade Offer'}
-                        </h2>
-                    </div>
-                    
-                    <div className="trade-players">
-                        <div className="trade-player">
-                            <div className="player-avatar" style={{ backgroundColor: fromPlayer.color }}>
-                                {fromPlayer.name[0]}
-                            </div>
-                            <h3>{fromPlayer.name}</h3>
-                            <p>Initiating Trade</p>
-                        </div>
-                        
-                        <motion.div 
-                            className="trade-arrow"
-                            animate={{ rotate: [0, 180, 360] }}
-                            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                        >
-                            <IoSwapHorizontal />
-                        </motion.div>
-                        
-                        <div className="trade-player">
-                            <div className="player-avatar" style={{ backgroundColor: toPlayer.color }}>
-                                {toPlayer.name[0]}
-                            </div>
-                            <h3>{toPlayer.name}</h3>
-                            <p>Receiving Offer</p>
-                        </div>
-                    </div>
-                    
-                    <div className="trade-details">
-                        <h4>Trade Details</h4>
-                        
-                        {isSender && offer.status === 'draft' && (
-                          <>
-                            <div className="trade-item">
-                                <label>
-                                    <span>💰 Money Amount:</span>
-                                    <input 
-                                        type="range" 
-                                        min="10" 
-                                        max={Math.min(100, fromPlayer.money)} 
-                                        value={tradeAmount}
-                                        onChange={(e) => setTradeAmount(Number(e.target.value))}
-                                    />
-                                    <span className="amount-display">${tradeAmount}</span>
-                                </label>
-                            </div>
-                            
-                            <div className="trade-item">
-                                <label>
-                                    <span>💬 Trade Message:</span>
-                                    <input 
-                                        type="text"
-                                        placeholder="Optional message..."
-                                        value={tradeMessage}
-                                        onChange={(e) => setTradeMessage(e.target.value)}
-                                    />
-                                </label>
-                            </div>
-                          </>
-                        )}
-                        
-                        <div className="trade-preview">
-                            {isReceiver && offer.status === 'sent' ? (
-                              <>
-                                <p><strong>{fromPlayer.name}</strong> wants to send <strong>${offer.amount}</strong> to <strong>you</strong></p>
-                                {offer.message && <p className="trade-note">Message: "{parseEmojiShortcuts(offer.message)}"</p>}
-                                <p className="trade-note">Do you want to accept this trade?</p>
-                              </>
-                            ) : isSender && offer.status === 'sent' ? (
-                              <>
-                                <p>You sent a trade offer of <strong>${offer.amount}</strong> to <strong>{toPlayer.name}</strong></p>
-                                {offer.message && <p className="trade-note">Message: "{parseEmojiShortcuts(offer.message)}"</p>}
-                                <p className="trade-note">Waiting for {toPlayer.name} to respond on their turn...</p>
-                              </>
-                            ) : isSender && offer.status === 'draft' ? (
-                              <>
-                                <p>You will send <strong>${tradeAmount}</strong> to <strong>{toPlayer.name}</strong></p>
-                                {tradeMessage && <p className="trade-note">Message: "{parseEmojiShortcuts(tradeMessage)}"</p>}
-                              </>
-                            ) : (
-                              <p><strong>{fromPlayer.name}</strong> offers <strong>${offer.amount}</strong> to <strong>{toPlayer.name}</strong></p>
-                            )}
-                        </div>
-                    </div>
-                    
-                                         <div className="modal-actions">
-                         {isReceiver && offer.status === 'sent' ? (
-                           // Receiving player can accept or decline
-                           <>
-                             <motion.button 
-                                 onClick={onDecline} 
-                                 className="cancel"
-                                 whileHover={{ scale: 1.05 }}
-                                 whileTap={{ scale: 0.95 }}
-                             >
-                                 ❌ Decline
-                             </motion.button>
-                             <motion.button 
-                                 onClick={onAccept}
-                                 className="confirm"
-                                 whileHover={{ scale: 1.05 }}
-                                 whileTap={{ scale: 0.95 }}
-                             >
-                                  <FaHandshake /> Accept Trade
-                             </motion.button>
-                           </>
-                         ) : isSender && offer.status === 'sent' ? (
-                           // Sending player sees the sent offer - can only close
-                           <motion.button 
-                               onClick={onClose} 
-                               className="cancel"
-                               whileHover={{ scale: 1.05 }}
-                               whileTap={{ scale: 0.95 }}
-                           >
-                               Close
-                           </motion.button>
-                         ) : isSender && offer.status === 'draft' ? (
-                           // Sending player can send or cancel
-                           <>
-                             <motion.button 
-                                 onClick={onCancel || onClose} 
-                                 className="cancel"
-                                 whileHover={{ scale: 1.05 }}
-                                 whileTap={{ scale: 0.95 }}
-                             >
-                                 Cancel
-                             </motion.button>
-                             <motion.button 
-                                 onClick={handleConfirmSend}
-                                 className="confirm"
-                                 whileHover={{ scale: 1.05 }}
-                                 whileTap={{ scale: 0.95 }}
-                                 disabled={tradeAmount > fromPlayer.money}
-                             >
-                                  📤 Send Trade Offer
-                             </motion.button>
-                           </>
-                         ) : (
-                           // Just close button for other states
-                           <motion.button 
-                               onClick={onClose} 
-                               className="cancel"
-                               whileHover={{ scale: 1.05 }}
-                               whileTap={{ scale: 0.95 }}
-                           >
-                               Close
-                           </motion.button>
-                         )}
-                     </div>
-                </motion.div>
+              <IoSwapHorizontal />
             </motion.div>
-        </AnimatePresence>
-    );
+
+            <div className="trade-player">
+              <div className="player-avatar" style={{ backgroundColor: toPlayer.color }}>
+                {toPlayer.name[0]}
+              </div>
+              <h3>{toPlayer.name}</h3>
+              <p>Receiving Offer</p>
+            </div>
+          </div>
+
+          <div className="trade-details">
+            <h4>Trade Details</h4>
+
+            {isSender && offer.status === 'draft' && (
+              <>
+                <div className="trade-item">
+                  <label>
+                    <span>💰 Money Amount:</span>
+                    <input
+                      type="range"
+                      min="10"
+                      max={Math.min(100, fromPlayer.money)}
+                      value={tradeAmount}
+                      onChange={(e) => setTradeAmount(Number(e.target.value))}
+                    />
+                    <span className="amount-display">${tradeAmount}</span>
+                  </label>
+                </div>
+
+                <div className="trade-item">
+                  <label>
+                    <span>💬 Trade Message:</span>
+                    <input
+                      type="text"
+                      placeholder="Optional message..."
+                      value={tradeMessage}
+                      onChange={(e) => setTradeMessage(e.target.value)}
+                    />
+                  </label>
+                </div>
+              </>
+            )}
+
+            <div className="trade-preview">
+              {isReceiver && offer.status === 'sent' ? (
+                <>
+                  <p><strong>{fromPlayer.name}</strong> wants to send <strong>${offer.amount}</strong> to <strong>you</strong></p>
+                  {offer.message && <p className="trade-note">Message: "{parseEmojiShortcuts(offer.message)}"</p>}
+                  <p className="trade-note">Do you want to accept this trade?</p>
+                </>
+              ) : isSender && offer.status === 'sent' ? (
+                <>
+                  <p>You sent a trade offer of <strong>${offer.amount}</strong> to <strong>{toPlayer.name}</strong></p>
+                  {offer.message && <p className="trade-note">Message: "{parseEmojiShortcuts(offer.message)}"</p>}
+                  <p className="trade-note">Waiting for {toPlayer.name} to respond on their turn...</p>
+                </>
+              ) : isSender && offer.status === 'draft' ? (
+                <>
+                  <p>You will send <strong>${tradeAmount}</strong> to <strong>{toPlayer.name}</strong></p>
+                  {tradeMessage && <p className="trade-note">Message: "{parseEmojiShortcuts(tradeMessage)}"</p>}
+                </>
+              ) : (
+                <p><strong>{fromPlayer.name}</strong> offers <strong>${offer.amount}</strong> to <strong>{toPlayer.name}</strong></p>
+              )}
+            </div>
+          </div>
+
+          <div className="modal-actions">
+            {isReceiver && offer.status === 'sent' ? (
+              // Receiving player can accept or decline
+              <>
+                <motion.button
+                  onClick={onDecline}
+                  className="cancel"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  ❌ Decline
+                </motion.button>
+                <motion.button
+                  onClick={onAccept}
+                  className="confirm"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <FaHandshake /> Accept Trade
+                </motion.button>
+              </>
+            ) : isSender && offer.status === 'sent' ? (
+              // Sending player sees the sent offer - can only close
+              <motion.button
+                onClick={onClose}
+                className="cancel"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Close
+              </motion.button>
+            ) : isSender && offer.status === 'draft' ? (
+              // Sending player can send or cancel
+              <>
+                <motion.button
+                  onClick={onCancel || onClose}
+                  className="cancel"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Cancel
+                </motion.button>
+                <motion.button
+                  onClick={handleConfirmSend}
+                  className="confirm"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  disabled={tradeAmount > fromPlayer.money}
+                >
+                  📤 Send Trade Offer
+                </motion.button>
+              </>
+            ) : (
+              // Just close button for other states
+              <motion.button
+                onClick={onClose}
+                className="cancel"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Close
+              </motion.button>
+            )}
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
 };
 
 //--- Interactive Tutorial Component ---
@@ -706,17 +703,17 @@ interface InteractiveTutorialProps {
   totalSquares: number;
 }
 
-const InteractiveTutorial: FC<InteractiveTutorialProps> = ({ 
-  step, 
-  onNext, 
-  onPrev, 
-  onClose, 
+const InteractiveTutorial: FC<InteractiveTutorialProps> = ({
+  step,
+  onNext,
+  onPrev,
+  onClose,
   isMobile,
   boardRef,
   totalSquares
 }) => {
   const [highlightBounds, setHighlightBounds] = useState<DOMRect | null>(null);
-  const [arrowPosition, setArrowPosition] = useState<{x: number, y: number} | null>(null);
+  const [arrowPosition, setArrowPosition] = useState<{ x: number, y: number } | null>(null);
 
   const tutorialSteps = [
     {
@@ -799,11 +796,11 @@ const InteractiveTutorial: FC<InteractiveTutorialProps> = ({
         if (element) {
           const bounds = element.getBoundingClientRect();
           setHighlightBounds(bounds);
-          
+
           // Calculate arrow position based on element position
           let arrowX = bounds.left + bounds.width / 2;
           let arrowY = bounds.top + bounds.height / 2;
-          
+
           if (currentStep.arrow === 'top') {
             arrowY = bounds.top - 40;
           } else if (currentStep.arrow === 'bottom') {
@@ -813,7 +810,7 @@ const InteractiveTutorial: FC<InteractiveTutorialProps> = ({
           } else if (currentStep.arrow === 'right') {
             arrowX = bounds.right + 40;
           }
-          
+
           setArrowPosition({ x: arrowX, y: arrowY });
         }
       } else {
@@ -823,7 +820,7 @@ const InteractiveTutorial: FC<InteractiveTutorialProps> = ({
     };
 
     updateHighlight();
-    
+
     // Update on resize
     window.addEventListener('resize', updateHighlight);
     return () => window.removeEventListener('resize', updateHighlight);
@@ -903,7 +900,7 @@ const InteractiveTutorial: FC<InteractiveTutorialProps> = ({
       {highlightBounds && (
         <>
           {/* Blurred backdrop with cutout */}
-          <div 
+          <div
             className="tutorial-backdrop-with-cutout"
             style={{
               clipPath: `polygon(
@@ -921,8 +918,8 @@ const InteractiveTutorial: FC<InteractiveTutorialProps> = ({
             }}
           ></div>
           {/* Glowing border around clear area */}
-          <div 
-            className="tutorial-spotlight" 
+          <div
+            className="tutorial-spotlight"
             style={{
               left: highlightBounds.left - 8,
               top: highlightBounds.top - 8,
@@ -932,10 +929,10 @@ const InteractiveTutorial: FC<InteractiveTutorialProps> = ({
           ></div>
         </>
       )}
-      
+
       {/* Arrow pointing to highlighted element */}
       {arrowPosition && currentStep.arrow && (
-        <div 
+        <div
           className="tutorial-arrow"
           style={{
             left: arrowPosition.x - 16,
@@ -950,7 +947,7 @@ const InteractiveTutorial: FC<InteractiveTutorialProps> = ({
       )}
 
       {/* Tutorial step card */}
-      <motion.div 
+      <motion.div
         className="tutorial-step-card"
         style={getCardPosition(currentStep.position, highlightBounds, isMobile)}
         initial={{ opacity: 0, scale: 0.8 }}
@@ -963,7 +960,7 @@ const InteractiveTutorial: FC<InteractiveTutorialProps> = ({
             <FaTimes />
           </button>
         </div>
-        
+
         <div className="tutorial-step-content">
           <p>{currentStep.content}</p>
         </div>
@@ -972,20 +969,20 @@ const InteractiveTutorial: FC<InteractiveTutorialProps> = ({
           <div className="tutorial-progress">
             <span>{step + 1} of {tutorialSteps.length}</span>
             <div className="tutorial-progress-bar">
-              <div 
-                className="tutorial-progress-fill" 
+              <div
+                className="tutorial-progress-fill"
                 style={{ width: `${((step + 1) / tutorialSteps.length) * 100}%` }}
               />
             </div>
           </div>
-          
+
           <div className="tutorial-step-buttons">
             {!isFirstStep && (
               <button onClick={onPrev} className="tutorial-btn tutorial-btn-secondary">
                 Previous
               </button>
             )}
-            
+
             {isLastStep ? (
               <button onClick={onClose} className="tutorial-btn tutorial-btn-primary">
                 Start Playing! 🚀
@@ -1026,7 +1023,7 @@ const App: FC = () => {
   const [isChatFullScreen, setIsChatFullScreen] = useState(false);
   const [showTutorial, setShowTutorial] = useState(!isMobile);
   const [tutorialStep, setTutorialStep] = useState(0);
-  
+
   const boardRef = useRef<HTMLDivElement>(null);
 
   // Calculate square size for piece positioning
@@ -1048,27 +1045,27 @@ const App: FC = () => {
 
   const addSystemMessage = useCallback((text: string) => {
     setMessages(prev => [
-        ...prev,
-        { id: Date.now(), playerName: 'System', playerColor: CALM_BLUE_PALETTE.dark, text }
+      ...prev,
+      { id: Date.now(), playerName: 'System', playerColor: CALM_BLUE_PALETTE.dark, text }
     ]);
   }, []);
 
   const [isRolling, setIsRolling] = useState(false);
 
   const handleRollDice = useCallback(() => {
-    if(isGameOver || isRolling) return;
-    
+    if (isGameOver || isRolling) return;
+
     setIsRolling(true);
-    
+
     // Use different dice ranges based on board size
     const maxDiceValue = isMobile ? 4 : 6; // Mobile: 1-4, Desktop: 1-6
     const winPosition = totalSquares - 1; // Last square index (8 for mobile, 15 for desktop)
-    
+
     // Simulate dice rolling animation
     const rollAnimation = setInterval(() => {
       setDiceResult(Math.floor(Math.random() * maxDiceValue) + 1);
     }, 100);
-    
+
     setTimeout(() => {
       clearInterval(rollAnimation);
       const finalRoll = Math.floor(Math.random() * maxDiceValue) + 1;
@@ -1077,45 +1074,45 @@ const App: FC = () => {
       addSystemMessage(`${players[currentPlayerId].name} rolled a ${finalRoll} (dice)`);
 
       setPlayers(prevPlayers => {
-          const currentPlayer = prevPlayers[currentPlayerId];
-          const newPosition = Math.min(currentPlayer.piecePosition + finalRoll, winPosition);
-          
-          addSystemMessage(`${currentPlayer.name} moved to position ${newPosition + 1}`);
-          
-          // Check for money collection
-          const moneySquare = moneySquares.find(ms => ms.position === newPosition && !ms.collected);
-          let updatedPlayer = { ...currentPlayer, piecePosition: newPosition };
-          
-          if (moneySquare) {
-            updatedPlayer.money += moneySquare.amount;
-            addSystemMessage(`${currentPlayer.name} collected $${moneySquare.amount}! (money)`);
-            setMoneySquares(prev => prev.map(ms => 
-              ms.position === newPosition ? { ...ms, collected: true } : ms
-            ));
-          }
+        const currentPlayer = prevPlayers[currentPlayerId];
+        const newPosition = Math.min(currentPlayer.piecePosition + finalRoll, winPosition);
 
-          if (newPosition >= winPosition) {
-              setIsGameOver(true);
-              setGameOverReason('win');
-              updatedPlayer.money += 20; // Winner prize
-              addSystemMessage(`${currentPlayer.name} reached position ${totalSquares} and won the game! Earned $20 prize! (win) (party)`);
-          }
-          
-          return {
-              ...prevPlayers,
-              [currentPlayerId]: updatedPlayer
-          };
+        addSystemMessage(`${currentPlayer.name} moved to position ${newPosition + 1}`);
+
+        // Check for money collection
+        const moneySquare = moneySquares.find(ms => ms.position === newPosition && !ms.collected);
+        let updatedPlayer = { ...currentPlayer, piecePosition: newPosition };
+
+        if (moneySquare) {
+          updatedPlayer.money += moneySquare.amount;
+          addSystemMessage(`${currentPlayer.name} collected $${moneySquare.amount}! (money)`);
+          setMoneySquares(prev => prev.map(ms =>
+            ms.position === newPosition ? { ...ms, collected: true } : ms
+          ));
+        }
+
+        if (newPosition >= winPosition) {
+          setIsGameOver(true);
+          setGameOverReason('win');
+          updatedPlayer.money += 20; // Winner prize
+          addSystemMessage(`${currentPlayer.name} reached position ${totalSquares} and won the game! Earned $20 prize! (win) (party)`);
+        }
+
+        return {
+          ...prevPlayers,
+          [currentPlayerId]: updatedPlayer
+        };
       });
     }, 1000);
   }, [currentPlayerId, players, isGameOver, isRolling, addSystemMessage, moneySquares, isMobile, totalSquares]);
 
   const handleEndTurn = () => {
-    if(isGameOver) return;
+    if (isGameOver) return;
     setCurrentPlayerId(prevId => (prevId === 1 ? 2 : 1));
     setDiceResult(null);
     setTurnNumber(prev => prev + 1);
   };
-  
+
   const handleSendMessage = (text: string) => {
     const currentPlayer = players[currentPlayerId];
     const newMessage: ChatMessage = {
@@ -1126,7 +1123,7 @@ const App: FC = () => {
     };
     setMessages(prev => [...prev, newMessage]);
   };
-  
+
   const handleInitiateTrade = (targetPlayerId: PlayerId) => {
     console.log('handleInitiateTrade called:', {
       targetPlayerId,
@@ -1134,7 +1131,7 @@ const App: FC = () => {
       tradeOffer,
       hasIncomingTrade: tradeOffer && tradeOffer.toPlayerId === currentPlayerId && tradeOffer.status === 'sent'
     });
-    
+
     // Special case: If clicking on your own trade button, check for incoming trades
     if (targetPlayerId === currentPlayerId) {
       // Check if there's a trade offer TO this player that they need to respond to
@@ -1144,25 +1141,25 @@ const App: FC = () => {
         setShowTradeModal(true);
         return;
       }
-      
+
       // If no incoming trade, show the "can't trade with yourself" message
       console.log('No incoming trade, showing error message');
       addSystemMessage("You can't trade with yourself!");
       return;
     }
-    
+
     // Check if there's already an active trade offer FROM this player (only if it's been sent, not draft)
     if (tradeOffer && tradeOffer.fromPlayerId === currentPlayerId && tradeOffer.status === 'sent') {
       addSystemMessage("You already have an active trade offer!");
       return;
     }
-    
+
     // Check if there's a pending trade offer that hasn't been responded to (from other player)
     if (tradeOffer && tradeOffer.status === 'sent' && tradeOffer.fromPlayerId !== currentPlayerId) {
       addSystemMessage("There's already a pending trade offer. Wait for it to be resolved!");
       return;
     }
-    
+
     // Create new trade offer in draft mode
     const newTradeOffer: TradeOffer = {
       id: Date.now(),
@@ -1176,33 +1173,33 @@ const App: FC = () => {
     setTradeOffer(newTradeOffer);
     setShowTradeModal(true);
   };
-  
+
   const handleAcceptTrade = () => {
-    if(tradeOffer) {
-        const fromPlayer = players[tradeOffer.fromPlayerId];
-        const toPlayer = players[tradeOffer.toPlayerId];
-        
-        if (fromPlayer.money < tradeOffer.amount) {
-          addSystemMessage(`${fromPlayer.name} doesn't have enough money for this trade! (sad)`);
-          setTradeOffer(null);
-          setShowTradeModal(false);
-          return;
-        }
-        
-        setPlayers(prev => ({
-          ...prev,
-          [tradeOffer.fromPlayerId]: { ...fromPlayer, money: fromPlayer.money - tradeOffer.amount },
-          [tradeOffer.toPlayerId]: { ...toPlayer, money: toPlayer.money + tradeOffer.amount }
-        }));
-        
-        addSystemMessage(`${fromPlayer.name} sent $${tradeOffer.amount} to ${toPlayer.name}! (trade) (money)`);
+    if (tradeOffer) {
+      const fromPlayer = players[tradeOffer.fromPlayerId];
+      const toPlayer = players[tradeOffer.toPlayerId];
+
+      if (fromPlayer.money < tradeOffer.amount) {
+        addSystemMessage(`${fromPlayer.name} doesn't have enough money for this trade! (sad)`);
         setTradeOffer(null);
         setShowTradeModal(false);
+        return;
+      }
+
+      setPlayers(prev => ({
+        ...prev,
+        [tradeOffer.fromPlayerId]: { ...fromPlayer, money: fromPlayer.money - tradeOffer.amount },
+        [tradeOffer.toPlayerId]: { ...toPlayer, money: toPlayer.money + tradeOffer.amount }
+      }));
+
+      addSystemMessage(`${fromPlayer.name} sent $${tradeOffer.amount} to ${toPlayer.name}! (trade) (money)`);
+      setTradeOffer(null);
+      setShowTradeModal(false);
     }
   };
-  
+
   const handleDeclineTrade = () => {
-    if(tradeOffer) {
+    if (tradeOffer) {
       addSystemMessage(`${players[tradeOffer.toPlayerId].name} declined the trade offer from ${players[tradeOffer.fromPlayerId].name}. (sad)`);
       setTradeOffer(null);
       setShowTradeModal(false);
@@ -1210,7 +1207,7 @@ const App: FC = () => {
   };
 
   const handleSendTradeOffer = (amount: number, message: string) => {
-    if(tradeOffer && tradeOffer.status === 'draft') {
+    if (tradeOffer && tradeOffer.status === 'draft') {
       const updatedOffer = { ...tradeOffer, amount, message, status: 'sent' as const };
       setTradeOffer(updatedOffer);
       setShowTradeModal(false);
@@ -1228,24 +1225,24 @@ const App: FC = () => {
   const handleRematch = () => {
     const player1 = players[1];
     const player2 = players[2];
-    
+
     if (player1.money < 25) {
       addSystemMessage(`${player1.name} doesn't have enough money for rematch ($25 required). ${player2.name} wins! (win)`);
       return;
     }
-    
+
     if (player2.money < 25) {
       addSystemMessage(`${player2.name} doesn't have enough money for rematch ($25 required). ${player1.name} wins! (win)`);
       return;
     }
-    
+
     // Deduct $25 from each player
     setPlayers(prev => ({
       ...prev,
       1: { ...prev[1], piecePosition: 0, money: prev[1].money - 25 },
       2: { ...prev[2], piecePosition: 0, money: prev[2].money - 25 }
     }));
-    
+
     setCurrentPlayerId(1);
     setDiceResult(null);
     setIsGameOver(false);
@@ -1294,7 +1291,7 @@ const App: FC = () => {
   useEffect(() => {
     const player1 = players[1];
     const player2 = players[2];
-    
+
     if (player1.money <= 0 && player2.money <= 0) {
       addSystemMessage("Both players are out of money! Game over! (sad)");
       setIsGameOver(true);
@@ -1311,14 +1308,14 @@ const App: FC = () => {
   }, [players, addSystemMessage]);
 
   const swipeHandlers = useSwipe((direction) => {
-      addSystemMessage(`Swiped ${direction}! Rolling dice...`);
-      handleRollDice();
+    addSystemMessage(`Swiped ${direction}! Rolling dice...`);
+    handleRollDice();
   });
-  
+
   const boardSquares = Array.from({ length: totalSquares }, (_, i) => i);
   const player1 = players[1];
   const player2 = players[2];
-  
+
 
 
   return (
@@ -2492,18 +2489,18 @@ const App: FC = () => {
       <div className="main-container" style={{ display: isMobile && isChatFullScreen ? 'none' : 'grid' }}>
         {isMobile ? (
           <div className="player-panels-container">
-            <PlayerPanel 
-              player={player1} 
-              isCurrentPlayer={currentPlayerId === 1} 
-              onTrade={handleInitiateTrade} 
+            <PlayerPanel
+              player={player1}
+              isCurrentPlayer={currentPlayerId === 1}
+              onTrade={handleInitiateTrade}
               hasPendingTrade={tradeOffer?.fromPlayerId === 1 && tradeOffer?.status === 'sent'}
               hasIncomingTrade={tradeOffer?.toPlayerId === 1 && tradeOffer?.status === 'sent' && currentPlayerId === 1}
               isGameOver={isGameOver}
             />
-            <PlayerPanel 
-              player={player2} 
-              isCurrentPlayer={currentPlayerId === 2} 
-              onTrade={handleInitiateTrade} 
+            <PlayerPanel
+              player={player2}
+              isCurrentPlayer={currentPlayerId === 2}
+              onTrade={handleInitiateTrade}
               hasPendingTrade={tradeOffer?.fromPlayerId === 2 && tradeOffer?.status === 'sent'}
               hasIncomingTrade={tradeOffer?.toPlayerId === 2 && tradeOffer?.status === 'sent' && currentPlayerId === 2}
               isGameOver={isGameOver}
@@ -2511,67 +2508,67 @@ const App: FC = () => {
           </div>
         ) : (
           <>
-            <PlayerPanel 
-              player={player1} 
-              isCurrentPlayer={currentPlayerId === 1} 
-              onTrade={handleInitiateTrade} 
+            <PlayerPanel
+              player={player1}
+              isCurrentPlayer={currentPlayerId === 1}
+              onTrade={handleInitiateTrade}
               hasPendingTrade={tradeOffer?.fromPlayerId === 1 && tradeOffer?.status === 'sent'}
               hasIncomingTrade={tradeOffer?.toPlayerId === 1 && tradeOffer?.status === 'sent' && currentPlayerId === 1}
               isGameOver={isGameOver}
             />
-            <PlayerPanel 
-              player={player2} 
-              isCurrentPlayer={currentPlayerId === 2} 
-              onTrade={handleInitiateTrade} 
-              className="p2" 
+            <PlayerPanel
+              player={player2}
+              isCurrentPlayer={currentPlayerId === 2}
+              onTrade={handleInitiateTrade}
+              className="p2"
               hasPendingTrade={tradeOffer?.fromPlayerId === 2 && tradeOffer?.status === 'sent'}
               hasIncomingTrade={tradeOffer?.toPlayerId === 2 && tradeOffer?.status === 'sent' && currentPlayerId === 2}
               isGameOver={isGameOver}
             />
           </>
         )}
-        
-        <motion.div 
-          className="game-area" 
+
+        <motion.div
+          className="game-area"
           {...(isMobile ? swipeHandlers : {})}
           variants={fadeInUp}
           initial="initial"
           animate="animate"
         >
           <AnimatePresence>
-                      {isMobile && !isGameOver && (
-            <motion.p 
-              style={{
-                textAlign: "center", 
-                color: CALM_BLUE_PALETTE.dark, 
-                marginBottom: "8px",
-                fontSize: "0.9rem",
-                padding: "0 8px",
-                lineHeight: "1.3"
-              }}
-              variants={fadeInUp}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-            >
-              👆 Swipe up to roll!
-            </motion.p>
-          )}
-            
+            {isMobile && !isGameOver && (
+              <motion.p
+                style={{
+                  textAlign: "center",
+                  color: CALM_BLUE_PALETTE.dark,
+                  marginBottom: "8px",
+                  fontSize: "0.9rem",
+                  padding: "0 8px",
+                  lineHeight: "1.3"
+                }}
+                variants={fadeInUp}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+              >
+                👆 Swipe up to roll!
+              </motion.p>
+            )}
+
             {isGameOver && (
-              <motion.div 
-                style={{textAlign: "center", marginBottom: "20px"}}
+              <motion.div
+                style={{ textAlign: "center", marginBottom: "20px" }}
                 variants={scaleIn}
                 initial="initial"
                 animate="animate"
               >
-                <h2 style={{color: "#4CAF50", margin: "0", fontSize: "2rem"}}>
-                  <FaTrophy style={{marginRight: "12px"}} />
-                  {players[player1.piecePosition >= 8 ? 1: 2].name} Wins!
+                <h2 style={{ color: "#4CAF50", margin: "0", fontSize: "2rem" }}>
+                  <FaTrophy style={{ marginRight: "12px" }} />
+                  {players[player1.piecePosition >= 8 ? 1 : 2].name} Wins!
                 </h2>
-                <p style={{color: CALM_BLUE_PALETTE.text, margin: "8px 0"}}>🎉 Congratulations! 🎉</p>
-                
-                <div style={{display: "flex", gap: "12px", justifyContent: "center", marginTop: "16px"}}>
+                <p style={{ color: CALM_BLUE_PALETTE.text, margin: "8px 0" }}>🎉 Congratulations! 🎉</p>
+
+                <div style={{ display: "flex", gap: "12px", justifyContent: "center", marginTop: "16px" }}>
                   {gameOverReason === 'win' ? (
                     <motion.button
                       onClick={handleRematch}
@@ -2597,7 +2594,7 @@ const App: FC = () => {
               </motion.div>
             )}
           </AnimatePresence>
-          
+
           <motion.div
             className="game-board"
             ref={boardRef}
@@ -2618,14 +2615,14 @@ const App: FC = () => {
           </motion.div>
 
           {!isMobile && (
-            <motion.div 
+            <motion.div
               className="controls"
               variants={fadeInUp}
               initial="initial"
               animate="animate"
             >
-              <motion.button 
-                onClick={handleRollDice} 
+              <motion.button
+                onClick={handleRollDice}
                 disabled={diceResult !== null || isGameOver || isRolling}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -2652,9 +2649,9 @@ const App: FC = () => {
                   </>
                 )}
               </motion.button>
-              
-              <motion.button 
-                onClick={handleEndTurn} 
+
+              <motion.button
+                onClick={handleEndTurn}
                 disabled={diceResult === null || isGameOver}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -2667,14 +2664,14 @@ const App: FC = () => {
         </motion.div>
 
         {isMobile && !isChatFullScreen && (
-          <motion.div 
+          <motion.div
             className="controls"
             variants={fadeInUp}
             initial="initial"
             animate="animate"
           >
-            <motion.button 
-              onClick={handleRollDice} 
+            <motion.button
+              onClick={handleRollDice}
               disabled={diceResult !== null || isGameOver || isRolling}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -2701,9 +2698,9 @@ const App: FC = () => {
                 </>
               )}
             </motion.button>
-            
-            <motion.button 
-              onClick={handleEndTurn} 
+
+            <motion.button
+              onClick={handleEndTurn}
               disabled={diceResult === null || isGameOver}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -2715,8 +2712,8 @@ const App: FC = () => {
         )}
 
         {!isMobile && (
-          <ChatSystem 
-            messages={messages} 
+          <ChatSystem
+            messages={messages}
             onSendMessage={handleSendMessage}
             isFullScreen={false}
             onToggleFullScreen={() => setIsChatFullScreen(!isChatFullScreen)}
@@ -2724,7 +2721,7 @@ const App: FC = () => {
           />
         )}
       </div>
-        
+
       {isMobile && !isChatFullScreen && (
         <motion.button
           className="floating-chat-button"
@@ -2743,8 +2740,8 @@ const App: FC = () => {
       )}
 
       {isMobile && isChatFullScreen && (
-        <ChatSystem 
-          messages={messages} 
+        <ChatSystem
+          messages={messages}
           onSendMessage={handleSendMessage}
           isFullScreen={true}
           onToggleFullScreen={() => setIsChatFullScreen(!isChatFullScreen)}
@@ -2753,7 +2750,7 @@ const App: FC = () => {
       )}
 
       {showTradeModal && (
-        <TradeModal 
+        <TradeModal
           offer={tradeOffer}
           players={players}
           currentPlayerId={currentPlayerId}
