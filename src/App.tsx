@@ -1005,7 +1005,7 @@ const App: FC = () => {
           --shadow-lg: 0 12px 40px rgba(87, 185, 255, 0.25);
           --gradient-primary: linear-gradient(135deg, var(--color-medium), var(--color-light));
           --gradient-secondary: linear-gradient(135deg, var(--color-dark), var(--color-text));
-          --chat-height: 280px;
+          --chat-height: 360px;
         }
         * {
           box-sizing: border-box;
@@ -1264,7 +1264,7 @@ const App: FC = () => {
           transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
           box-shadow: var(--shadow-md);
           position: relative;
-          overflow: hidden;
+          overflow: visible;
         }
         .player-panel::before {
           content: '';
@@ -1275,6 +1275,7 @@ const App: FC = () => {
           bottom: 0;
           background: linear-gradient(135deg, rgba(87, 185, 255, 0.03), rgba(144, 213, 255, 0.03));
           pointer-events: none;
+          border-radius: var(--border-radius);
         }
         .player-panel.p2 {
           grid-area: p2;
@@ -1356,6 +1357,7 @@ const App: FC = () => {
           width: 100%;
           margin-top: 12px;
           position: relative;
+          overflow: visible;
         }
         .trade-button.pending-trade {
           background: linear-gradient(135deg, #ff6b6b, #ff8e53);
@@ -1363,19 +1365,22 @@ const App: FC = () => {
         }
         .trade-notification {
           position: absolute;
-          top: -5px;
-          right: -5px;
+          top: -8px;
+          right: -8px;
           background: #ff4757;
           color: white;
           border-radius: 50%;
-          width: 20px;
-          height: 20px;
+          width: 22px;
+          height: 22px;
           display: flex;
           align-items: center;
           justify-content: center;
           font-size: 12px;
           font-weight: bold;
           animation: bounce 1s infinite;
+          z-index: 10;
+          border: 2px solid white;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
         @keyframes pulseGlow {
           0%, 100% { box-shadow: 0 0 5px rgba(255,107,107,0.5); }
@@ -1471,18 +1476,21 @@ const App: FC = () => {
         }
         .floating-chat-button .notification-badge {
           position: absolute;
-          top: -5px;
-          right: -5px;
+          top: -8px;
+          right: -8px;
           background: #ff4757;
           color: white;
           border-radius: 50%;
-          width: 20px;
-          height: 20px;
+          width: 22px;
+          height: 22px;
           display: flex;
           align-items: center;
           justify-content: center;
           font-size: 0.7rem;
           font-weight: bold;
+          z-index: 10;
+          border: 2px solid white;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
         .emoji-panel {
           display: flex;
@@ -1643,6 +1651,9 @@ const App: FC = () => {
         }
         .trade-player {
           text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
         }
         .trade-player h3 {
           margin: 8px 0 4px 0;
@@ -1756,6 +1767,8 @@ const App: FC = () => {
             width: 100%;
             max-width: 100vw;
             box-sizing: border-box;
+            overflow: visible;
+            position: relative;
           }
           .player-panel { 
             flex: 1; 
@@ -1764,6 +1777,7 @@ const App: FC = () => {
             min-height: auto;
             max-width: calc(50vw - 12px);
             box-sizing: border-box;
+            overflow: visible;
           }
           .player-panel .player-header {
             flex-direction: column;
@@ -1802,12 +1816,21 @@ const App: FC = () => {
             padding: 8px 12px;
             font-size: 0.9rem;
             margin-top: 8px;
+            overflow: visible;
+            position: relative;
           }
           .player-panel .active-indicator {
             position: absolute;
             top: 4px;
             right: 4px;
             font-size: 1rem;
+          }
+          .player-panel .trade-notification {
+            top: -6px;
+            right: -6px;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
           }
           .game-area {
             grid-area: board;
